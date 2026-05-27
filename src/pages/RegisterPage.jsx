@@ -1,36 +1,76 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import client from '../api/client';
+import client, { AuthAPI } from '../api/client';
+
+// Telefon raqamni formatlash: +998 XX XXX XX XX
+function formatPhone(value) {
+  let digits = value.replace(/\D/g, '');
+  if (digits.startsWith('998')) { /* OK */ }
+  else if (digits.length > 0 && !digits.startsWith('998')) {
+    if (digits.startsWith('9') && digits.length <= 9) digits = '998' + digits;
+  }
+  if (digits.length === 0) return '';
+  if (digits.length <= 3) return '+' + digits;
+  if (digits.length <= 5) return '+' + digits.slice(0, 3) + ' ' + digits.slice(3);
+  if (digits.length <= 8) return '+' + digits.slice(0, 3) + ' ' + digits.slice(3, 5) + ' ' + digits.slice(5);
+  if (digits.length <= 10) return '+' + digits.slice(0, 3) + ' ' + digits.slice(3, 5) + ' ' + digits.slice(5, 8) + ' ' + digits.slice(8);
+  return '+' + digits.slice(0, 3) + ' ' + digits.slice(3, 5) + ' ' + digits.slice(5, 8) + ' ' + digits.slice(8, 10) + ' ' + digits.slice(10, 12);
+}
+function cleanPhone(formatted) {
+  const digits = formatted.replace(/\D/g, '');
+  return digits ? '+' + digits : '';
+}
+
+const SUBJECTS = [
+  { value: 'programming', label: '💻 Dasturlash' },
+  { value: 'english', label: '🇬🇧 Ingliz tili' },
+  { value: 'math', label: '📐 Matematika' },
+  { value: 'physics', label: '⚡ Fizika' },
+  { value: 'chemistry', label: '🧪 Kimyo' },
+  { value: 'biology', label: '🧬 Biologiya' },
+  { value: 'history', label: '📜 Tarix' },
+  { value: 'russian', label: '🇷🇺 Rus tili' },
+  { value: 'arabic', label: '🕌 Arab tili' },
+  { value: 'design', label: '🎨 Dizayn' },
+];
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState('+998 ');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [subject, setSubject] = useState('');
   const [showPwd, setShowPwd] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  const handlePhoneChange = (e) => {
+    const raw = e.target.value;
+    if (raw.length < 4) { setPhone('+998 '); return; }
+    setPhone(formatPhone(raw));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
     if (!fullName.trim()) { setError("Ism familiya kiriting"); return; }
-    if (!phone.trim()) { setError("Telefon raqamini kiriting"); return; }
+    const cleanedPhone = cleanPhone(phone);
+    if (!cleanedPhone || cleanedPhone.length < 13) { setError("Telefon raqamini to'liq kiriting"); return; }
     if (!password || password.length < 6) { setError("Parol kamida 6 ta belgi bo'lishi kerak"); return; }
     if (password !== confirmPassword) { setError("Parollar mos kelmaydi"); return; }
+    if (!subject) { setError("Fan tanlang"); return; }
 
     setLoading(true);
     try {
       const res = await client.post('/auth/register', {
         full_name: fullName.trim(),
-        phone: phone.trim(),
+        phone: cleanedPhone,
         password,
+        subject,
       });
-      // Avtomatik login
       const { access_token, full_name, role } = res.data;
       localStorage.setItem('mp_token', access_token);
       localStorage.setItem('mp_name', full_name);
@@ -38,10 +78,10 @@ export default function RegisterPage() {
       navigate('/dashboard', { replace: true });
       window.location.reload();
     } catch (err) {
-      const status = err.response?.status;
-      if (status === 409) setError("Bu telefon raqami allaqachon ro'yxatdan o'tgan");
-      else if (status === 422) setError("Ma'lumotlarni to'g'ri kiriting");
-      else setError(err.response?.data?.detail || "Xato yuz berdi");
+      const st = err.response?.status;
+      if (st === 409) setError("Bu telefon raqami allaqachon ro'yxatdan o'tgan");
+      else if (st === 422) setError("Ma'lumotlarni to'g'ri kiriting");
+      else setError(err.response?.data?.detail || "Server bilan bog'lanib bo'lmadi");
     } finally {
       setLoading(false);
     }
@@ -93,8 +133,24 @@ export default function RegisterPage() {
 
               <div className="form-group">
                 <label className="form-label">Telefon raqami</label>
-                <input type="tel" className="form-control" placeholder="+998 90 123 45 67"
-                  value={phone} onChange={e => setPhone(e.target.value)} autoComplete="tel" />
+                <input type="tel" className="form-control" placeholder="+998 93 105 01 16"
+                  value={phone} onChange={handlePhoneChange} autoComplete="tel" />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Fan tanlang</label>
+                <div className="subject-grid">
+                  {SUBJECTS.map(s => (
+                    <button
+                      key={s.value}
+                      type="button"
+                      className={`subject-option${subject === s.value ? ' active' : ''}`}
+                      onClick={() => setSubject(s.value)}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="form-group">
@@ -111,8 +167,7 @@ export default function RegisterPage() {
 
               <div className="form-group">
                 <label className="form-label">Parolni tasdiqlang</label>
-                <input type="password" className="form-control"
-                  placeholder="Parolni qayta kiriting"
+                <input type="password" className="form-control" placeholder="Parolni qayta kiriting"
                   value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} autoComplete="new-password" />
               </div>
 

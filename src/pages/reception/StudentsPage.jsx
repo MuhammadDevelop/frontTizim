@@ -2,8 +2,22 @@ import { useState, useEffect } from 'react';
 import { ReceptionAPI } from '../../api/client';
 import { FiUsers, FiPlus, FiEdit2, FiToggleLeft, FiToggleRight } from 'react-icons/fi';
 
-const fmt = (n) => n != null ? new Intl.NumberFormat('uz-UZ').format(Number(n)) + " so'm" : '—';
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('uz-UZ', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+
+const SUBJECTS = [
+  { value: 'programming', label: '💻 Dasturlash' },
+  { value: 'english', label: '🇬🇧 Ingliz tili' },
+  { value: 'math', label: '📐 Matematika' },
+  { value: 'physics', label: '⚡ Fizika' },
+  { value: 'chemistry', label: '🧪 Kimyo' },
+  { value: 'biology', label: '🧬 Biologiya' },
+  { value: 'history', label: '📜 Tarix' },
+  { value: 'russian', label: '🇷🇺 Rus tili' },
+  { value: 'arabic', label: '🕌 Arab tili' },
+  { value: 'design', label: '🎨 Dizayn' },
+];
+
+const subjectLabel = (val) => SUBJECTS.find(s => s.value === val)?.label || val || '—';
 
 export default function StudentsPage() {
   const [students, setStudents] = useState([]);
@@ -11,7 +25,7 @@ export default function StudentsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ full_name: '', phone: '', password: '', role: 'student' });
+  const [form, setForm] = useState({ full_name: '', phone: '', password: '', role: 'student', subject: '' });
 
   const fetchStudents = async () => {
     setLoading(true);
@@ -19,7 +33,7 @@ export default function StudentsPage() {
       const res = await ReceptionAPI.students(0, 50);
       setStudents(Array.isArray(res.data) ? res.data : res.data?.items || []);
     } catch (err) {
-      alert("O'quvchilarni yuklashda xato: " + (err.response?.data?.detail || err.message));
+      console.error("O'quvchilarni yuklashda xato:", err);
     } finally {
       setLoading(false);
     }
@@ -29,13 +43,13 @@ export default function StudentsPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ full_name: '', phone: '', password: '', role: 'student' });
+    setForm({ full_name: '', phone: '', password: '', role: 'student', subject: '' });
     setShowModal(true);
   };
 
   const openEdit = (s) => {
     setEditing(s);
-    setForm({ full_name: s.full_name || '', phone: s.phone || '', password: '', role: 'student' });
+    setForm({ full_name: s.full_name || '', phone: s.phone || '', password: '', role: 'student', subject: s.subject || '' });
     setShowModal(true);
   };
 
@@ -57,12 +71,17 @@ export default function StudentsPage() {
     setSaving(true);
     try {
       if (editing) {
-        const payload = { full_name: form.full_name, phone: form.phone };
+        const payload = { full_name: form.full_name, phone: form.phone, subject: form.subject || null };
         if (form.password) payload.password = form.password;
         await ReceptionAPI.updateStudent(editing.id, payload);
       } else {
         if (!form.password || form.password.length < 6) {
           alert("Parol kamida 6 ta belgi bo'lishi kerak");
+          setSaving(false);
+          return;
+        }
+        if (!form.subject) {
+          alert("Fan tanlang!");
           setSaving(false);
           return;
         }
@@ -144,6 +163,7 @@ export default function StudentsPage() {
                   <th>#</th>
                   <th>Ism</th>
                   <th>Telefon</th>
+                  <th>Fan</th>
                   <th>Holat</th>
                   <th>Amallar</th>
                 </tr>
@@ -154,6 +174,7 @@ export default function StudentsPage() {
                     <td>{i + 1}</td>
                     <td style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{s.full_name}</td>
                     <td>{s.phone}</td>
+                    <td><span className="badge badge-info">{subjectLabel(s.subject)}</span></td>
                     <td>
                       <span className={`badge ${s.is_active ? 'badge-success' : 'badge-danger'}`}>
                         {s.is_active ? 'Faol' : 'Nofaol'}
@@ -192,45 +213,38 @@ export default function StudentsPage() {
               <div className="modal-body">
                 <div className="form-group">
                   <label className="form-label">To'liq ism</label>
-                  <input
-                    type="text"
-                    name="full_name"
-                    className="form-control"
-                    placeholder="Ism familiya"
-                    value={form.full_name}
-                    onChange={handleChange}
-                    required
-                  />
+                  <input type="text" name="full_name" className="form-control" placeholder="Ism familiya"
+                    value={form.full_name} onChange={handleChange} required />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Telefon</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    className="form-control"
-                    placeholder="+998 90 123 45 67"
-                    value={form.phone}
-                    onChange={handleChange}
-                    required
-                  />
+                  <input type="tel" name="phone" className="form-control" placeholder="+998 90 123 45 67"
+                    value={form.phone} onChange={handleChange} required />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Parol {editing && '(bo\'sh qoldirsa o\'zgarmaydi)'}</label>
-                  <input
-                    type="password"
-                    name="password"
-                    className="form-control"
-                    placeholder="Kamida 6 ta belgi"
-                    value={form.password}
-                    onChange={handleChange}
-                    {...(!editing && { required: true, minLength: 6 })}
-                  />
+                  <label className="form-label">Fan tanlang</label>
+                  <div className="subject-grid">
+                    {SUBJECTS.map(s => (
+                      <button key={s.value} type="button"
+                        className={`subject-option${form.subject === s.value ? ' active' : ''}`}
+                        onClick={() => setForm({ ...form, subject: s.value })}
+                      >
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Parol {editing && "(bo'sh qoldirsa o'zgarmaydi)"}</label>
+                  <input type="password" name="password" className="form-control" placeholder="Kamida 6 ta belgi"
+                    value={form.password} onChange={handleChange}
+                    {...(!editing && { required: true, minLength: 6 })} />
                 </div>
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={closeModal}>Bekor qilish</button>
                 <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? <span className="spinner" /> : (editing ? 'Saqlash' : 'Qo\'shish')}
+                  {saving ? <span className="spinner" /> : (editing ? 'Saqlash' : "Qo'shish")}
                 </button>
               </div>
             </form>

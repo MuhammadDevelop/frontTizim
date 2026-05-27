@@ -2,8 +2,38 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+// Telefon raqamni formatlash: +998 XX XXX XX XX
+function formatPhone(value) {
+  // Faqat raqamlarni olish
+  let digits = value.replace(/\D/g, '');
+  
+  // Agar + bilan boshlansa yoki 998 bilan boshlasa
+  if (digits.startsWith('998')) {
+    // 998XXXXXXXXX formatida
+  } else if (digits.length > 0 && !digits.startsWith('998')) {
+    // Agar foydalanuvchi 9 dan boshlasa, 998 ni qo'shamiz
+    if (digits.startsWith('9') && digits.length <= 9) {
+      digits = '998' + digits;
+    }
+  }
+  
+  // Raqamlarni formatlash
+  if (digits.length === 0) return '';
+  if (digits.length <= 3) return '+' + digits;
+  if (digits.length <= 5) return '+' + digits.slice(0, 3) + ' ' + digits.slice(3);
+  if (digits.length <= 8) return '+' + digits.slice(0, 3) + ' ' + digits.slice(3, 5) + ' ' + digits.slice(5);
+  if (digits.length <= 10) return '+' + digits.slice(0, 3) + ' ' + digits.slice(3, 5) + ' ' + digits.slice(5, 8) + ' ' + digits.slice(8);
+  return '+' + digits.slice(0, 3) + ' ' + digits.slice(3, 5) + ' ' + digits.slice(5, 8) + ' ' + digits.slice(8, 10) + ' ' + digits.slice(10, 12);
+}
+
+// Telefon raqamdan faqat raqamlarni olish (+998XXXXXXXXX formatida)
+function cleanPhone(formatted) {
+  const digits = formatted.replace(/\D/g, '');
+  return digits ? '+' + digits : '';
+}
+
 export default function LoginPage() {
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState('+998 ');
   const [password, setPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
   const [error, setError] = useState('');
@@ -11,20 +41,31 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  const handlePhoneChange = (e) => {
+    const raw = e.target.value;
+    // Agar foydalanuvchi hamma narsani o'chirsa
+    if (raw.length < 4) {
+      setPhone('+998 ');
+      return;
+    }
+    setPhone(formatPhone(raw));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (!phone.trim()) { setError("Telefon raqamini kiriting"); return; }
+    const cleanedPhone = cleanPhone(phone);
+    if (!cleanedPhone || cleanedPhone.length < 13) { setError("Telefon raqamini to'liq kiriting"); return; }
     if (!password || password.length < 6) { setError("Parol kamida 6 ta belgi bo'lishi kerak"); return; }
     setLoading(true);
     try {
-      const { role } = await login(phone.trim(), password);
+      const { role } = await login(cleanedPhone, password);
       navigate('/dashboard', { replace: true });
     } catch (err) {
       const status = err.response?.status;
       if (status === 401 || status === 422) setError("Telefon raqami yoki parol noto'g'ri");
       else if (status === 403) setError("Hisobingiz bloklangan");
-      else setError(err.response?.data?.detail || "Xato yuz berdi");
+      else setError(err.response?.data?.detail || "Server bilan bog'lanib bo'lmadi. Qayta urinib ko'ring.");
     } finally {
       setLoading(false);
     }
@@ -70,8 +111,8 @@ export default function LoginPage() {
             <form className="login-form" onSubmit={handleSubmit}>
               <div className="form-group">
                 <label className="form-label">Telefon raqami</label>
-                <input type="tel" className="form-control" placeholder="+998 90 123 45 67"
-                  value={phone} onChange={e => setPhone(e.target.value)} autoComplete="username" />
+                <input type="tel" className="form-control" placeholder="+998 93 105 01 16"
+                  value={phone} onChange={handlePhoneChange} autoComplete="username" />
               </div>
               <div className="form-group">
                 <label className="form-label">Parol</label>

@@ -34,6 +34,8 @@ const STasksPage = lazy(() => import('./pages/student/TasksPage'));
 const GradesPage = lazy(() => import('./pages/student/GradesPage'));
 const SBonusesPage = lazy(() => import('./pages/student/BonusesPage'));
 const SPaymentsPage = lazy(() => import('./pages/student/PaymentsPage'));
+const STestsPage = lazy(() => import('./pages/student/TestsPage'));
+const SProfilePage = lazy(() => import('./pages/student/ProfilePage'));
 
 // SuperAdmin
 const StatsPage = lazy(() => import('./pages/superadmin/StatsPage'));
@@ -142,6 +144,8 @@ export default function App() {
 
               {/* Student only */}
               <Route path="grades" element={<GradesPage />} />
+              <Route path="tests" element={<STestsPage />} />
+              <Route path="profile" element={<SProfilePage />} />
 
               {/* SuperAdmin */}
               <Route path="stats" element={<StatsPage />} />

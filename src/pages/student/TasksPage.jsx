@@ -8,7 +8,7 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    StudentAPI.tasks().then(r => setTasks(r.data)).catch(e => alert(e.response?.data?.detail || 'Xato')).finally(() => setLoading(false));
+    StudentAPI.tasks().then(r => setTasks(Array.isArray(r.data) ? r.data : [])).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div className="loading-overlay"><div className="spinner spinner-lg" /></div>;

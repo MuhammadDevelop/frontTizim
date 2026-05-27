@@ -9,7 +9,7 @@ export default function PaymentsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    StudentAPI.payments().then(r => setPayments(r.data)).catch(e => alert(e.response?.data?.detail || 'Xato')).finally(() => setLoading(false));
+    StudentAPI.payments().then(r => setPayments(Array.isArray(r.data) ? r.data : [])).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   const totalPaid = payments.filter(p => p.status === 'paid').reduce((s, p) => s + Number(p.amount || 0), 0);

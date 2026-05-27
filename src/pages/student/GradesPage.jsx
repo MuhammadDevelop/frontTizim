@@ -6,7 +6,7 @@ export default function GradesPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    StudentAPI.gradesSummary().then(r => setData(r.data)).catch(e => alert(e.response?.data?.detail || 'Xato')).finally(() => setLoading(false));
+    StudentAPI.gradesSummary().then(r => setData(r.data)).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div className="loading-overlay"><div className="spinner spinner-lg" /></div>;

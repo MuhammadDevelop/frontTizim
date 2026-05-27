@@ -14,13 +14,19 @@ client.interceptors.request.use((config) => {
   return config;
 });
 
-// 401 xatosida logout
+// 401 xatosida logout (faqat login/register sahifasida bo'lmasa)
 client.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      localStorage.clear();
-      window.location.href = '/login';
+      const path = window.location.pathname;
+      // Login va register sahifalarida 401 ni ignore qilish
+      if (path !== '/login' && path !== '/register') {
+        localStorage.removeItem('mp_token');
+        localStorage.removeItem('mp_name');
+        localStorage.removeItem('mp_role');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(err);
   }

@@ -1,65 +1,75 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useState } from 'react';
-
-const ROLE_LABELS = {
-  superadmin: '👑 SuperAdmin',
-  director: '🏫 Direktor',
-  reception: '📋 Qabul xodimi',
-  teacher: '📚 O\'qituvchi',
-  student: '🎓 O\'quvchi',
-};
-
-const NAV_CONFIG = {
-  superadmin: [
-    { to: 'stats', icon: '📊', label: 'Statistika', section: 'Asosiy' },
-    { to: 'directors', icon: '🏫', label: 'Direktorlar', section: 'Boshqaruv' },
-    { to: 'all-users', icon: '👥', label: 'Foydalanuvchilar', section: 'Boshqaruv' },
-  ],
-  director: [
-    { to: 'dashboard', icon: '📊', label: 'Dashboard', section: 'Asosiy' },
-    { to: 'teachers', icon: '👨‍🏫', label: 'O\'qituvchilar', section: 'Xodimlar' },
-    { to: 'courses', icon: '📚', label: 'Kurslar', section: 'O\'quv' },
-    { to: 'groups', icon: '👥', label: 'Guruhlar', section: 'O\'quv' },
-    { to: 'finance', icon: '💰', label: 'Moliya', section: 'Hisobot' },
-  ],
-  reception: [
-    { to: 'students', icon: '🎓', label: 'O\'quvchilar', section: 'Asosiy' },
-    { to: 'enroll', icon: '📋', label: 'Guruhga yozish', section: 'Asosiy' },
-    { to: 'payments', icon: '💳', label: 'To\'lovlar', section: 'Moliya' },
-  ],
-  teacher: [
-    { to: 'my-groups', icon: '👥', label: 'Mening guruhlarim', section: 'Asosiy' },
-    { to: 'attendance', icon: '✅', label: 'Davomat', section: 'Dars' },
-    { to: 'lessons', icon: '📖', label: 'Darslar', section: 'Dars' },
-    { to: 'tasks', icon: '📝', label: 'Vazifalar', section: 'Baholash' },
-    { to: 'bonuses', icon: '⭐', label: 'Bonuslar', section: 'Baholash' },
-    { to: 'materials', icon: '📁', label: 'Materiallar', section: 'Kontent' },
-  ],
-  student: [
-    { to: 'my-groups', icon: '👥', label: 'Guruhlarim', section: 'Asosiy' },
-    { to: 'attendance', icon: '✅', label: 'Davomatim', section: 'Asosiy' },
-    { to: 'tasks', icon: '📝', label: 'Vazifalarim', section: 'Ta\'lim' },
-    { to: 'grades', icon: '🏆', label: 'Baholarim', section: 'Ta\'lim' },
-    { to: 'bonuses', icon: '⭐', label: 'Bonuslarim', section: 'Ta\'lim' },
-    { to: 'payments', icon: '💳', label: 'To\'lovlarim', section: 'Moliya' },
-  ],
-};
+import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
+import { useState, useRef, useEffect } from 'react';
 
 export default function DashboardLayout() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const { t, lang, changeLang, SUPPORTED_LANGS } = useLanguage();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
+  const langRef = useRef(null);
+
+  // Close lang dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (langRef.current && !langRef.current.contains(e.target)) setLangOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   if (!user) return null;
 
+  const NAV_CONFIG = {
+    superadmin: [
+      { to: 'stats', icon: '📊', label: t('nav.stats'), section: t('section.main') },
+      { to: 'directors', icon: '🏫', label: t('nav.directors'), section: t('section.management') },
+      { to: 'all-users', icon: '👥', label: t('nav.allUsers'), section: t('section.management') },
+    ],
+    director: [
+      { to: 'dashboard', icon: '📊', label: t('nav.dashboard'), section: t('section.main') },
+      { to: 'teachers', icon: '👨‍🏫', label: t('nav.teachers'), section: t('section.staff') },
+      { to: 'courses', icon: '📚', label: t('nav.courses'), section: t('section.education') },
+      { to: 'groups', icon: '👥', label: t('nav.groups'), section: t('section.education') },
+      { to: 'finance', icon: '💰', label: t('nav.finance'), section: t('section.report') },
+    ],
+    reception: [
+      { to: 'students', icon: '🎓', label: t('nav.students'), section: t('section.main') },
+      { to: 'enroll', icon: '📋', label: t('nav.enroll'), section: t('section.main') },
+      { to: 'payments', icon: '💳', label: t('nav.payments'), section: t('section.finance') },
+    ],
+    teacher: [
+      { to: 'my-groups', icon: '👥', label: t('nav.myGroups'), section: t('section.main') },
+      { to: 'attendance', icon: '✅', label: t('nav.attendance'), section: t('section.lesson') },
+      { to: 'lessons', icon: '📖', label: t('nav.lessons'), section: t('section.lesson') },
+      { to: 'tasks', icon: '📝', label: t('nav.tasks'), section: t('section.grading') },
+      { to: 'bonuses', icon: '⭐', label: t('nav.bonuses'), section: t('section.grading') },
+      { to: 'materials', icon: '📁', label: t('nav.materials'), section: t('section.content') },
+    ],
+    student: [
+      { to: 'my-groups', icon: '👥', label: t('nav.sMyGroups'), section: t('section.main') },
+      { to: 'attendance', icon: '✅', label: t('nav.sAttendance'), section: t('section.main') },
+      { to: 'tasks', icon: '📝', label: t('nav.sTasks'), section: t('section.learning') },
+      { to: 'grades', icon: '🏆', label: t('nav.grades'), section: t('section.learning') },
+      { to: 'tests', icon: '📋', label: t('nav.tests'), section: t('section.learning') },
+      { to: 'bonuses', icon: '⭐', label: t('nav.sBonuses'), section: t('section.learning') },
+      { to: 'payments', icon: '💳', label: t('nav.sPayments'), section: t('section.finance') },
+      { to: 'profile', icon: '👤', label: t('nav.profile'), section: t('section.account') },
+    ],
+  };
+
   const navItems = NAV_CONFIG[user.role] || [];
   const avatar = user.name ? user.name[0].toUpperCase() : '?';
+  const roleLabel = t(`role.${user.role}`) || user.role;
 
   const handleLogout = () => {
-    if (window.confirm('Tizimdan chiqmoqchimisiz?')) {
+    if (window.confirm(t('app.logoutConfirm'))) {
       logout();
-      navigate('/login', { replace: true });
+      window.location.href = '/login';
     }
   };
 
@@ -74,6 +84,8 @@ export default function DashboardLayout() {
     sections[sections.length - 1].items.push(item);
   });
 
+  const currentLang = SUPPORTED_LANGS.find(l => l.code === lang) || SUPPORTED_LANGS[0];
+
   return (
     <div className="app-layout">
       {/* Sidebar Overlay */}
@@ -84,8 +96,8 @@ export default function DashboardLayout() {
         <div className="sidebar-brand">
           <div className="brand-logo">🏫</div>
           <div>
-            <div className="brand-title">Markaz</div>
-            <div className="brand-subtitle">Platformasi v1.0</div>
+            <div className="brand-title">{t('app.name')}</div>
+            <div className="brand-subtitle">{t('app.subtitle')}</div>
           </div>
         </div>
 
@@ -94,7 +106,7 @@ export default function DashboardLayout() {
             <div className="user-avatar">{avatar}</div>
             <div>
               <div className="user-name">{user.name}</div>
-              <div className="user-role-text">{ROLE_LABELS[user.role] || user.role}</div>
+              <div className="user-role-text">{roleLabel}</div>
             </div>
           </div>
         </div>
@@ -119,9 +131,9 @@ export default function DashboardLayout() {
         </nav>
 
         <div className="sidebar-footer">
-          <button className="logout-btn" onClick={handleLogout}>
+          <button className="logout-btn" onClick={handleLogout} type="button">
             <span>🚪</span>
-            <span>Chiqish</span>
+            <span>{t('app.logout')}</span>
           </button>
         </div>
       </aside>
@@ -132,7 +144,37 @@ export default function DashboardLayout() {
           <div className="topbar-left">
             <button className="menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>☰</button>
           </div>
-          <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{user.name}</div>
+          <div className="topbar-actions">
+            {/* Language Switcher */}
+            <div className="lang-switcher" ref={langRef}>
+              <button className="topbar-btn" onClick={() => setLangOpen(!langOpen)} title="Language">
+                <span>{currentLang.flag}</span>
+                <span className="lang-code">{lang.toUpperCase()}</span>
+              </button>
+              {langOpen && (
+                <div className="lang-dropdown">
+                  {SUPPORTED_LANGS.map(l => (
+                    <button
+                      key={l.code}
+                      className={`lang-option ${l.code === lang ? 'active' : ''}`}
+                      onClick={() => { changeLang(l.code); setLangOpen(false); }}
+                    >
+                      <span>{l.flag}</span>
+                      <span>{l.label}</span>
+                      {l.code === lang && <span className="lang-check">✓</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Theme Toggle */}
+            <button className="topbar-btn theme-toggle-btn" onClick={toggleTheme} title={theme === 'dark' ? 'Light mode' : 'Dark mode'}>
+              <span className="theme-icon">{theme === 'dark' ? '☀️' : '🌙'}</span>
+            </button>
+
+            <span className="topbar-username">{user.name}</span>
+          </div>
         </header>
         <div className="page-content">
           <Outlet />

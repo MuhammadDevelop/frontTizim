@@ -1,17 +1,24 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useState, useRef, useEffect } from 'react';
+import { StudentAPI } from '../api/client';
 
 export default function DashboardLayout() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { t, lang, changeLang, SUPPORTED_LANGS } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const langRef = useRef(null);
+
+  // Student attendance gate: bugun davomat belgilangan yoki yo'q
+  const [attendanceChecked, setAttendanceChecked] = useState(false);
+  const [attendanceMarked, setAttendanceMarked] = useState(false);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
 
   // Close lang dropdown on outside click
   useEffect(() => {
@@ -22,7 +29,42 @@ export default function DashboardLayout() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  // O'quvchi uchun: bugungi davomatni tekshirish
+  useEffect(() => {
+    if (user?.role !== 'student') {
+      setAttendanceMarked(true);
+      setAttendanceChecked(true);
+      return;
+    }
+
+    // Sessiondan tekshirish
+    const todayKey = `mp_attendance_${new Date().toISOString().slice(0, 10)}`;
+    if (sessionStorage.getItem(todayKey) === 'done') {
+      setAttendanceMarked(true);
+      setAttendanceChecked(true);
+      return;
+    }
+
+    setAttendanceChecked(true);
+    setAttendanceMarked(false);
+  }, [user]);
+
+  // O'quvchi davomat tugmasini bosganda
+  const handleMarkAttendance = () => {
+    setAttendanceLoading(true);
+    // Davomatni belgilash — session saqlash
+    const todayKey = `mp_attendance_${new Date().toISOString().slice(0, 10)}`;
+    sessionStorage.setItem(todayKey, 'done');
+    setTimeout(() => {
+      setAttendanceMarked(true);
+      setAttendanceLoading(false);
+    }, 800);
+  };
+
   if (!user) return null;
+
+  const isStudent = user.role === 'student';
+  const isLocked = isStudent && !attendanceMarked;
 
   const NAV_CONFIG = {
     superadmin: [
@@ -51,8 +93,8 @@ export default function DashboardLayout() {
       { to: 'materials', icon: '📁', label: t('nav.materials'), section: t('section.content') },
     ],
     student: [
+      { to: 'attendance', icon: '✅', label: t('nav.sAttendance'), section: t('section.main'), alwaysOpen: true },
       { to: 'my-groups', icon: '👥', label: t('nav.sMyGroups'), section: t('section.main') },
-      { to: 'attendance', icon: '✅', label: t('nav.sAttendance'), section: t('section.main') },
       { to: 'tasks', icon: '📝', label: t('nav.sTasks'), section: t('section.learning') },
       { to: 'grades', icon: '🏆', label: t('nav.grades'), section: t('section.learning') },
       { to: 'tests', icon: '📋', label: t('nav.tests'), section: t('section.learning') },
@@ -115,17 +157,28 @@ export default function DashboardLayout() {
           {sections.map((sec, si) => (
             <div key={si}>
               <div className="nav-section-title">{sec.title}</div>
-              {sec.items.map(item => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <span className="nav-icon">{item.icon}</span>
-                  <span>{item.label}</span>
-                </NavLink>
-              ))}
+              {sec.items.map(item => {
+                const locked = isLocked && !item.alwaysOpen;
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={locked ? '#' : item.to}
+                    className={({ isActive }) => `nav-item${isActive && !locked ? ' active' : ''}${locked ? ' nav-item-locked' : ''}`}
+                    onClick={(e) => {
+                      if (locked) {
+                        e.preventDefault();
+                        return;
+                      }
+                      setSidebarOpen(false);
+                    }}
+                    title={locked ? 'Avval davomatni belgilang!' : ''}
+                  >
+                    <span className="nav-icon">{item.icon}</span>
+                    <span>{item.label}</span>
+                    {locked && <span className="nav-lock-icon">🔒</span>}
+                  </NavLink>
+                );
+              })}
             </div>
           ))}
         </nav>
@@ -177,7 +230,30 @@ export default function DashboardLayout() {
           </div>
         </header>
         <div className="page-content">
-          <Outlet />
+          {/* Student attendance gate overlay */}
+          {isLocked && (
+            <div className="attendance-gate">
+              <div className="attendance-gate-card">
+                <div className="attendance-gate-icon">✅</div>
+                <h2>Davomatni belgilang!</h2>
+                <p>Tizimning boshqa bo'limlariga kirish uchun avval bugungi davomatingizni tasdiqlang.</p>
+                <button
+                  className="btn btn-primary btn-lg"
+                  onClick={handleMarkAttendance}
+                  disabled={attendanceLoading}
+                  style={{ marginTop: 16, minWidth: 200 }}
+                >
+                  {attendanceLoading ? <span className="spinner" /> : '✅ Davomatni belgilash'}
+                </button>
+                <p style={{ marginTop: 16, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                  {new Date().toLocaleDateString('uz-UZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Oddiy kontent — faqat davomat belgilangandan keyin */}
+          {!isLocked && <Outlet />}
         </div>
       </main>
     </div>

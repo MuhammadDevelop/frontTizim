@@ -4,6 +4,8 @@ import { FiDollarSign, FiPlus, FiFilter } from 'react-icons/fi';
 
 const fmt = (n) => n != null ? new Intl.NumberFormat('uz-UZ').format(Number(n)) + " so'm" : '—';
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('uz-UZ', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+const fmtTime = (d) => d ? new Date(d).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }) : '—';
+const fmtDateTime = (d) => d ? `${fmtDate(d)}, ${fmtTime(d)}` : '—';
 
 const PAYMENT_TYPES = [
   { value: 'cash', label: 'Naqd' },
@@ -15,6 +17,7 @@ const typeLabel = (t) => PAYMENT_TYPES.find(p => p.value === t)?.label || t;
 
 export default function PaymentsPage() {
   const [payments, setPayments] = useState([]);
+  const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [month, setMonth] = useState(() => {
     const d = new Date();
@@ -22,12 +25,23 @@ export default function PaymentsPage() {
   });
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [form, setForm] = useState({
     student_id: '',
     amount: '',
     month: '',
     payment_type: 'cash',
   });
+
+  // O'quvchilar ro'yxatini yuklash
+  const fetchStudents = async () => {
+    try {
+      const res = await ReceptionAPI.students(0, 500);
+      setStudents(Array.isArray(res.data) ? res.data : res.data?.items || []);
+    } catch (err) {
+      console.error("O'quvchilarni yuklashda xato:", err);
+    }
+  };
 
   const fetchPayments = async (m) => {
     setLoading(true);
@@ -41,15 +55,41 @@ export default function PaymentsPage() {
     }
   };
 
+  useEffect(() => { fetchStudents(); }, []);
   useEffect(() => { fetchPayments(month); }, [month]);
 
+  // O'quvchi ma'lumotlarini topish
+  const getStudentInfo = (studentId) => {
+    const s = students.find(st => st.id === studentId);
+    return s ? { name: s.full_name, phone: s.phone } : { name: `ID: ${studentId}`, phone: '—' };
+  };
+
+  // Yangi oy bo'lganda to'lov nol bo'lsin
+  const getNextMonth = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  };
+
   const openCreate = () => {
-    setForm({ student_id: '', amount: '', month: month, payment_type: 'cash' });
+    setForm({ student_id: '', amount: '', month: getNextMonth(), payment_type: 'cash' });
+    setSearchQuery('');
     setShowModal(true);
   };
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  // O'quvchi tanlash uchun filtrlangan ro'yxat
+  const filteredStudents = students.filter(s => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return s.full_name?.toLowerCase().includes(q) || s.phone?.includes(q);
+  });
+
+  const handleSelectStudent = (s) => {
+    setForm({ ...form, student_id: s.id });
+    setSearchQuery(`${s.full_name} — ${s.phone}`);
   };
 
   const handleSubmit = async (e) => {
@@ -76,6 +116,7 @@ export default function PaymentsPage() {
   };
 
   const totalAmount = payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+  const selectedStudent = form.student_id ? students.find(s => s.id === Number(form.student_id)) : null;
 
   return (
     <>
@@ -139,32 +180,43 @@ export default function PaymentsPage() {
               <thead>
                 <tr>
                   <th>#</th>
-                  <th>O'quvchi ID</th>
+                  <th>O'quvchi</th>
+                  <th>Telefon</th>
                   <th>Summa</th>
                   <th>Oy</th>
                   <th>Turi</th>
                   <th>Holat</th>
-                  <th>Sana</th>
+                  <th>Sana va vaqt</th>
                 </tr>
               </thead>
               <tbody>
-                {payments.map((p, i) => (
-                  <tr key={p.id || i}>
-                    <td>{i + 1}</td>
-                    <td>{p.student_id}</td>
-                    <td style={{ color: 'var(--success)', fontWeight: 600 }}>{fmt(p.amount)}</td>
-                    <td>{p.month || '—'}</td>
-                    <td>
-                      <span className="badge badge-info">{typeLabel(p.payment_type)}</span>
-                    </td>
-                    <td>
-                      <span className={`badge ${p.status === 'paid' || p.status === 'confirmed' ? 'badge-success' : 'badge-warning'}`}>
-                        {p.status === 'paid' || p.status === 'confirmed' ? 'Tasdiqlangan' : p.status || 'Kutilmoqda'}
-                      </span>
-                    </td>
-                    <td>{fmtDate(p.created_at)}</td>
-                  </tr>
-                ))}
+                {payments.map((p, i) => {
+                  const info = getStudentInfo(p.student_id);
+                  return (
+                    <tr key={p.id || i}>
+                      <td>{i + 1}</td>
+                      <td style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
+                        {p.student_name || info.name}
+                      </td>
+                      <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                        {p.student_phone || info.phone}
+                      </td>
+                      <td style={{ color: 'var(--success)', fontWeight: 600 }}>{fmt(p.amount)}</td>
+                      <td>{p.month || '—'}</td>
+                      <td>
+                        <span className="badge badge-info">{typeLabel(p.payment_type)}</span>
+                      </td>
+                      <td>
+                        <span className={`badge ${p.status === 'paid' || p.status === 'confirmed' ? 'badge-success' : 'badge-warning'}`}>
+                          {p.status === 'paid' || p.status === 'confirmed' ? 'Tasdiqlangan' : p.status || 'Kutilmoqda'}
+                        </span>
+                      </td>
+                      <td style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                        {fmtDateTime(p.paid_at || p.created_at)}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -173,25 +225,62 @@ export default function PaymentsPage() {
 
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 560 }}>
             <div className="modal-header">
               <h3 className="modal-title">Yangi to'lov</h3>
               <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="modal-body">
+                {/* O'quvchi qidirish va tanlash */}
                 <div className="form-group">
-                  <label className="form-label">O'quvchi ID</label>
+                  <label className="form-label">O'quvchini qidiring (ism yoki telefon)</label>
                   <input
-                    type="number"
-                    name="student_id"
+                    type="text"
                     className="form-control"
-                    placeholder="O'quvchi IDsini kiriting"
-                    value={form.student_id}
-                    onChange={handleChange}
-                    required
+                    placeholder="Ismini yoki telefon raqamini yozing..."
+                    value={searchQuery}
+                    onChange={e => { setSearchQuery(e.target.value); setForm({ ...form, student_id: '' }); }}
+                    autoFocus
                   />
+                  {searchQuery && !form.student_id && (
+                    <div className="student-search-results">
+                      {filteredStudents.length === 0 ? (
+                        <div className="student-search-empty">O'quvchi topilmadi</div>
+                      ) : (
+                        filteredStudents.slice(0, 6).map(s => (
+                          <button
+                            key={s.id}
+                            type="button"
+                            className="student-search-item"
+                            onClick={() => handleSelectStudent(s)}
+                          >
+                            <div className="student-search-name">{s.full_name}</div>
+                            <div className="student-search-phone">{s.phone}</div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
                 </div>
+
+                {/* Tanlangan o'quvchi ma'lumotlari */}
+                {selectedStudent && (
+                  <div className="selected-student-card">
+                    <div className="selected-student-avatar">
+                      {selectedStudent.full_name?.[0]?.toUpperCase() || '?'}
+                    </div>
+                    <div className="selected-student-info">
+                      <div className="selected-student-name">{selectedStudent.full_name}</div>
+                      <div className="selected-student-phone">{selectedStudent.phone}</div>
+                    </div>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => {
+                      setForm({ ...form, student_id: '' });
+                      setSearchQuery('');
+                    }}>✕</button>
+                  </div>
+                )}
+
                 <div className="form-group">
                   <label className="form-label">Summa (so'm)</label>
                   <input
@@ -207,7 +296,7 @@ export default function PaymentsPage() {
                 </div>
                 <div className="form-row">
                   <div className="form-group">
-                    <label className="form-label">Oy</label>
+                    <label className="form-label">To'lov oyi</label>
                     <input
                       type="month"
                       name="month"
@@ -231,10 +320,20 @@ export default function PaymentsPage() {
                     </select>
                   </div>
                 </div>
+
+                {/* Hozirgi vaqt ko'rsatish */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '10px 14px', background: 'rgba(108,99,255,0.08)',
+                  borderRadius: 'var(--radius-md)', fontSize: '0.82rem', color: 'var(--text-secondary)'
+                }}>
+                  <span>🕐</span>
+                  <span>To'lov sanasi: <strong>{new Date().toLocaleDateString('uz-UZ', { year: 'numeric', month: 'long', day: 'numeric' })}</strong>, {new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Bekor qilish</button>
-                <button type="submit" className="btn btn-primary" disabled={saving}>
+                <button type="submit" className="btn btn-primary" disabled={saving || !form.student_id}>
                   {saving ? <span className="spinner" /> : "To'lov qo'shish"}
                 </button>
               </div>

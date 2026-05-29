@@ -9,7 +9,7 @@ export default function AttendancePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    StudentAPI.attendance().then(r => setRecords(r.data)).catch(e => alert(e.response?.data?.detail || 'Xato')).finally(() => setLoading(false));
+    StudentAPI.attendance().then(r => setRecords(Array.isArray(r.data) ? r.data : [])).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div className="loading-overlay"><div className="spinner spinner-lg" /></div>;

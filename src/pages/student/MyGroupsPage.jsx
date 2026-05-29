@@ -6,7 +6,7 @@ export default function MyGroupsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    StudentAPI.myGroups().then(r => setGroups(r.data)).catch(e => alert(e.response?.data?.detail || 'Xato')).finally(() => setLoading(false));
+    StudentAPI.myGroups().then(r => setGroups(Array.isArray(r.data) ? r.data : [])).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div className="loading-overlay"><div className="spinner spinner-lg" /></div>;

@@ -3,11 +3,45 @@ import { DirectorAPI } from '../../api/client';
 
 const fmt = (n) => n != null ? new Intl.NumberFormat('uz-UZ').format(Number(n)) + " so'm" : '—';
 
+// Tayyor kurs nomlari ro'yxati
+const COURSE_NAMES = [
+  { value: 'Python Backend', icon: '🐍' },
+  { value: 'Frontend Development', icon: '🌐' },
+  { value: 'Full Stack', icon: '💻' },
+  { value: 'Java Development', icon: '☕' },
+  { value: 'Mobile Development', icon: '📱' },
+  { value: 'Flutter/Dart', icon: '🦋' },
+  { value: 'React Native', icon: '⚛️' },
+  { value: 'Data Science', icon: '📊' },
+  { value: 'Machine Learning', icon: '🤖' },
+  { value: 'Cyber Security', icon: '🔐' },
+  { value: 'DevOps', icon: '⚙️' },
+  { value: 'UI/UX Design', icon: '🎨' },
+  { value: 'Graphic Design', icon: '🖌️' },
+  { value: 'English Language', icon: '🇬🇧' },
+  { value: 'IELTS Preparation', icon: '📝' },
+  { value: 'Russian Language', icon: '🇷🇺' },
+  { value: 'Arabic Language', icon: '🕌' },
+  { value: 'Matematika', icon: '📐' },
+  { value: 'Fizika', icon: '⚡' },
+  { value: 'Kimyo', icon: '🧪' },
+  { value: 'Biologiya', icon: '🧬' },
+  { value: 'Tarix', icon: '📜' },
+  { value: 'Robototexnika', icon: '🤖' },
+  { value: 'Scratch Programming', icon: '🧩' },
+  { value: 'C++ Programming', icon: '⚡' },
+  { value: 'Go Language', icon: '🔵' },
+  { value: 'Database Administration', icon: '🗄️' },
+  { value: 'SMM & Marketing', icon: '📣' },
+  { value: 'Video Editing', icon: '🎬' },
+  { value: '3D Modeling', icon: '🎲' },
+];
+
 export default function CoursesPage() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
-  const [form, setForm] = useState({ name:'', description:'', price:'', duration_months:3 });
+  const [form, setForm] = useState({ name: '', description: '', price: '', duration_months: 3 });
 
   const load = () => {
     setLoading(true);
@@ -17,9 +51,12 @@ export default function CoursesPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.name) { alert("Kurs nomini tanlang!"); return; }
     try { await DirectorAPI.createCourse({ ...form, price: Number(form.price), duration_months: Number(form.duration_months) }); setModal(false); load(); }
     catch (err) { alert(err.response?.data?.detail || 'Xato'); }
   };
+
+  const selectedCourse = COURSE_NAMES.find(c => c.value === form.name);
 
   return (
     <>
@@ -44,20 +81,34 @@ export default function CoursesPage() {
           <div className="modal-header"><div className="modal-title">Yangi Kurs</div><button className="modal-close" onClick={() => setModal(false)}>✕</button></div>
           <form onSubmit={handleSubmit}>
             <div className="modal-body">
-              <div className="form-group"><label className="form-label">Kurs nomi</label>
-                <input className="form-control" value={form.name} onChange={e => setForm({...form, name: e.target.value})} required /></div>
+              <div className="form-group">
+                <label className="form-label">Kurs nomini tanlang</label>
+                <div className="course-select-grid">
+                  {COURSE_NAMES.map(c => (
+                    <button
+                      key={c.value}
+                      type="button"
+                      className={`course-select-option${form.name === c.value ? ' active' : ''}`}
+                      onClick={() => setForm({...form, name: c.value})}
+                    >
+                      <span className="course-select-icon">{c.icon}</span>
+                      <span className="course-select-label">{c.value}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="form-group"><label className="form-label">Tavsif</label>
-                <input className="form-control" value={form.description} onChange={e => setForm({...form, description: e.target.value})} /></div>
+                <input className="form-control" placeholder="Kurs haqida qisqacha ma'lumot" value={form.description} onChange={e => setForm({...form, description: e.target.value})} /></div>
               <div className="form-row">
                 <div className="form-group"><label className="form-label">Narxi (so'm)</label>
-                  <input type="number" className="form-control" value={form.price} onChange={e => setForm({...form, price: e.target.value})} required /></div>
+                  <input type="number" className="form-control" placeholder="500000" value={form.price} onChange={e => setForm({...form, price: e.target.value})} required /></div>
                 <div className="form-group"><label className="form-label">Davomiyligi (oy)</label>
                   <input type="number" className="form-control" value={form.duration_months} onChange={e => setForm({...form, duration_months: e.target.value})} /></div>
               </div>
             </div>
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" onClick={() => setModal(false)}>Bekor</button>
-              <button type="submit" className="btn btn-primary">Saqlash</button>
+              <button type="submit" className="btn btn-primary" disabled={!form.name}>Saqlash</button>
             </div>
           </form>
         </div>

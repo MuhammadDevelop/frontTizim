@@ -82,6 +82,7 @@ export default function DashboardLayout() {
     reception: [
       { to: 'students', icon: '🎓', label: t('nav.students'), section: t('section.main') },
       { to: 'enroll', icon: '📋', label: t('nav.enroll'), section: t('section.main') },
+      { to: 'reception-groups', icon: '👥', label: 'Guruhlar', section: t('section.main') },
       { to: 'payments', icon: '💳', label: t('nav.payments'), section: t('section.finance') },
     ],
     teacher: [

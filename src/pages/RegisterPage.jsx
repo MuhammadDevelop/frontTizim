@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import client from '../api/client';
+import client, { DirectorAPI, StudentAPI, ReceptionAPI } from '../api/client';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
+import GroupCreationModal from '../components/GroupCreationModal';
 
 // Telefon raqamni formatlash: +998 XX XXX XX XX
 function formatPhone(value) {
@@ -110,6 +111,8 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+  const [groupModalOpen, setGroupModalOpen] = useState(false);
+  const [createdStudentId, setCreatedStudentId] = useState(null);
   const navigate = useNavigate();
   const { login } = useAuth();
   const { t, lang, changeLang, SUPPORTED_LANGS } = useLanguage();
@@ -139,6 +142,7 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
+      // Register the student
       const res = await client.post('/auth/register', {
         full_name: fullName.trim(),
         phone: cleanedPhone,
@@ -150,11 +154,29 @@ export default function RegisterPage() {
       localStorage.setItem('mp_token', access_token);
       localStorage.setItem('mp_name', full_name);
       localStorage.setItem('mp_role', role);
-      // Darajani ham saqlash
+      // Store subject info
       localStorage.setItem('mp_subject', subject);
       localStorage.setItem('mp_subject_level', subjectLevel);
-      navigate('/dashboard', { replace: true });
-      window.location.reload();
+
+      // After registration, get the newly created student ID
+      const me = await StudentAPI.me();
+      const studentId = me.data.id;
+
+      // Try to find an existing group for the selected subject
+      const groupsRes = await ReceptionAPI.groups();
+      const groups = groupsRes.data;
+      const matchingGroup = groups.find(g => g.subject === subject);
+      if (matchingGroup) {
+        // Enroll student in existing group
+        await ReceptionAPI.enroll(studentId, matchingGroup.id);
+        alert('O\'quvchi muvaffaqiyatli guruhga qo\'shildi!');
+        navigate('/dashboard', { replace: true });
+        window.location.reload();
+      } else {
+        // Open modal to create a new group for this subject
+        setCreatedStudentId(studentId);
+        setGroupModalOpen(true);
+      }
     } catch (err) {
       const st = err.response?.status;
       if (st === 409) setError(t('auth.errPhoneExists'));
@@ -315,6 +337,18 @@ export default function RegisterPage() {
           </div>
         </div>
       </div>
+
+      {/* Guruh yaratish modali */}
+      <GroupCreationModal
+        isOpen={groupModalOpen}
+        onClose={() => setGroupModalOpen(false)}
+        studentId={createdStudentId}
+        subject={subject}
+        onSuccess={() => {
+          setGroupModalOpen(false);
+          window.location.href = '/dashboard';
+        }}
+      />
     </>
   );
 }

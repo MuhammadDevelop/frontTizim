@@ -18,6 +18,7 @@ const FinancePage = lazy(() => import('./pages/director/FinancePage'));
 const StudentsPage = lazy(() => import('./pages/reception/StudentsPage'));
 const EnrollPage = lazy(() => import('./pages/reception/EnrollPage'));
 const RPaymentsPage = lazy(() => import('./pages/reception/PaymentsPage'));
+const RGroupsPage = lazy(() => import('./pages/reception/GroupsPage'));
 
 // Teacher
 const TMyGroupsPage = lazy(() => import('./pages/teacher/MyGroupsPage'));
@@ -104,6 +105,7 @@ export default function App() {
               {/* Reception */}
               <Route path="students" element={<StudentsPage />} />
               <Route path="enroll" element={<EnrollPage />} />
+              <Route path="reception-groups" element={<RGroupsPage />} />
 
               {/* Shared paths — role-based switching */}
               <Route path="my-groups" element={

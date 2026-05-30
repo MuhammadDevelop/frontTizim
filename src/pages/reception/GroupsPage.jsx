@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DirectorAPI } from '../../api/client';
+import { ReceptionAPI, DirectorAPI } from '../../api/client';
 
 const DAYS_UZ = {
   monday: 'Du', tuesday: 'Se', wednesday: 'Ch',
@@ -24,7 +24,7 @@ const DAY_OPTIONS = [
   { value: 'sunday',    label: 'Yakshanba' },
 ];
 
-export default function GroupsPage() {
+export default function ReceptionGroupsPage() {
   const [groups, setGroups]       = useState([]);
   const [teachers, setTeachers]   = useState([]);
   const [loading, setLoading]     = useState(true);
@@ -33,7 +33,6 @@ export default function GroupsPage() {
   const [error, setError]         = useState('');
   const [search, setSearch]       = useState('');
 
-  // Form state
   const [form, setForm] = useState({
     name: '', subject: '', teacher_id: '',
     start_time: '09:00', end_time: '11:00', days: [],
@@ -41,7 +40,7 @@ export default function GroupsPage() {
 
   const load = () => {
     setLoading(true);
-    Promise.all([DirectorAPI.groups(), DirectorAPI.teachers()])
+    Promise.all([ReceptionAPI.groups(), DirectorAPI.teachers()])
       .then(([gr, tr]) => { setGroups(gr.data || []); setTeachers(tr.data || []); })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -65,14 +64,14 @@ export default function GroupsPage() {
   const handleSave = async (e) => {
     e.preventDefault();
     setError('');
-    if (!form.name.trim())        { setError("Guruh nomini kiriting"); return; }
-    if (!form.subject)             { setError("Fanni tanlang"); return; }
-    if (!form.teacher_id)          { setError("O'qituvchini tanlang"); return; }
-    if (form.days.length === 0)    { setError("Kamida bitta kun tanlang"); return; }
+    if (!form.name.trim())     { setError("Guruh nomini kiriting"); return; }
+    if (!form.subject)          { setError("Fanni tanlang"); return; }
+    if (!form.teacher_id)       { setError("O'qituvchini tanlang"); return; }
+    if (form.days.length === 0) { setError("Kamida bitta kun tanlang"); return; }
 
     setSaving(true);
     try {
-      await DirectorAPI.createGroup({
+      await ReceptionAPI.createGroup({
         name: form.name.trim(),
         subject: form.subject,
         teacher_id: Number(form.teacher_id),
@@ -128,7 +127,11 @@ export default function GroupsPage() {
           <div className="empty-state">
             <div className="empty-state-icon">👥</div>
             <h4>{search ? 'Qidiruv natijasi topilmadi' : 'Guruhlar mavjud emas'}</h4>
-            {!search && <button className="btn btn-primary" onClick={openModal} style={{ marginTop: 12 }}>➕ Guruh qo'shish</button>}
+            {!search && (
+              <button className="btn btn-primary" onClick={openModal} style={{ marginTop: 12 }}>
+                ➕ Guruh qo'shish
+              </button>
+            )}
           </div>
         ) : (
           <div className="table-wrapper">
@@ -149,9 +152,7 @@ export default function GroupsPage() {
                 {filtered.map((g, i) => (
                   <tr key={g.id}>
                     <td style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{i + 1}</td>
-                    <td>
-                      <strong>{g.name}</strong>
-                    </td>
+                    <td><strong>{g.name}</strong></td>
                     <td>
                       <span className="badge badge-primary" style={{ fontSize: 12 }}>
                         {SUBJECT_LABELS[g.subject] || g.subject || '—'}
@@ -171,7 +172,9 @@ export default function GroupsPage() {
                             {DAYS_UZ[d] || d}
                           </span>
                         ))}
-                        {(!g.days || g.days.length === 0) && <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>—</span>}
+                        {(!g.days || g.days.length === 0) && (
+                          <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>—</span>
+                        )}
                       </div>
                     </td>
                     <td>
@@ -209,18 +212,12 @@ export default function GroupsPage() {
             </div>
 
             <form onSubmit={handleSave} style={{ padding: '0 1.5rem 1.5rem' }}>
-              {/* Nomi */}
               <div className="form-group">
                 <label className="form-label">Guruh nomi</label>
-                <input
-                  type="text" className="form-control"
-                  placeholder="Masalan: JavaScript-1"
-                  value={form.name}
-                  onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                />
+                <input type="text" className="form-control" placeholder="Masalan: JavaScript-1"
+                  value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
               </div>
 
-              {/* Fan */}
               <div className="form-group">
                 <label className="form-label">Fan</label>
                 <select className="form-control" value={form.subject}
@@ -232,7 +229,6 @@ export default function GroupsPage() {
                 </select>
               </div>
 
-              {/* O'qituvchi */}
               <div className="form-group">
                 <label className="form-label">O'qituvchi</label>
                 <select className="form-control" value={form.teacher_id}
@@ -244,7 +240,6 @@ export default function GroupsPage() {
                 </select>
               </div>
 
-              {/* Vaqt */}
               <div className="form-group">
                 <label className="form-label">Dars vaqti</label>
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
@@ -258,13 +253,12 @@ export default function GroupsPage() {
                 </div>
               </div>
 
-              {/* Kunlar */}
               <div className="form-group">
                 <label className="form-label">Dars kunlari</label>
                 <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
                   {[
-                    { label: 'D-Ch-J', days: ['monday','wednesday','friday'] },
-                    { label: 'S-P-Sh', days: ['tuesday','thursday','saturday'] },
+                    { label: 'D-Ch-J', days: ['monday', 'wednesday', 'friday'] },
+                    { label: 'S-P-Sh', days: ['tuesday', 'thursday', 'saturday'] },
                   ].map(preset => (
                     <button key={preset.label} type="button"
                       onClick={() => setForm(p => ({ ...p, days: preset.days }))}

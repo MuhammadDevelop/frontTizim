@@ -38,12 +38,30 @@ export default function ReceptionGroupsPage() {
     start_time: '09:00', end_time: '11:00', days: [],
   });
 
-  const load = () => {
+  const [teacherError, setTeacherError] = useState('');
+
+  const load = async () => {
     setLoading(true);
-    Promise.all([ReceptionAPI.groups(), DirectorAPI.teachers()])
-      .then(([gr, tr]) => { setGroups(gr.data || []); setTeachers(tr.data || []); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    try {
+      const gr = await ReceptionAPI.groups();
+      const groupsData = gr.data;
+      setGroups(Array.isArray(groupsData) ? groupsData : groupsData?.items || groupsData?.data || []);
+    } catch (err) {
+      console.error("Guruhlarni yuklashda xatolik:", err);
+    }
+    
+    try {
+      setTeacherError('');
+      // Agar backendda ReceptionAPI.teachers bo'lmasa, DirectorAPI orqali o'qiymiz
+      const trAPI = ReceptionAPI.teachers ? ReceptionAPI.teachers : DirectorAPI.teachers;
+      const tr = await trAPI();
+      const trData = tr.data;
+      setTeachers(Array.isArray(trData) ? trData : trData?.items || trData?.data || trData?.users || trData?.teachers || []);
+    } catch (err) {
+      console.error("O'qituvchilarni yuklashda xatolik:", err);
+      setTeacherError(err.response?.status + " " + (err.response?.data?.detail || err.message));
+    }
+    setLoading(false);
   };
 
   useEffect(() => { load(); }, []);
@@ -82,7 +100,9 @@ export default function ReceptionGroupsPage() {
       setShowModal(false);
       load();
     } catch (err) {
-      setError(err.response?.data?.detail || "Xatolik yuz berdi");
+      let msg = err.response?.data?.detail;
+      if (typeof msg === 'object') msg = JSON.stringify(msg);
+      setError(msg || "Xatolik yuz berdi");
     } finally {
       setSaving(false);
     }
@@ -234,9 +254,15 @@ export default function ReceptionGroupsPage() {
                 <select className="form-control" value={form.teacher_id}
                   onChange={e => setForm(p => ({ ...p, teacher_id: e.target.value }))}>
                   <option value="">— O'qituvchini tanlang —</option>
-                  {teachers.map(t => (
-                    <option key={t.id} value={t.id}>{t.full_name}</option>
-                  ))}
+                  {teacherError ? (
+                    <option value="" disabled>Xatolik: {teacherError}</option>
+                  ) : teachers.length === 0 ? (
+                    <option value="" disabled>O'qituvchilar topilmadi</option>
+                  ) : (
+                    teachers.map(t => (
+                      <option key={t.id} value={t.id}>{t.full_name}</option>
+                    ))
+                  )}
                 </select>
               </div>
 

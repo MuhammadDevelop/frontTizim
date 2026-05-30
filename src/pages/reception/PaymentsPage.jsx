@@ -36,8 +36,12 @@ export default function PaymentsPage() {
   // O'quvchilar ro'yxatini yuklash
   const fetchStudents = async () => {
     try {
-      const res = await ReceptionAPI.students(0, 500);
-      setStudents(Array.isArray(res.data) ? res.data : res.data?.items || []);
+      const res = await ReceptionAPI.students(0, 50);
+      let data = res.data;
+      if (data && typeof data === 'object' && !Array.isArray(data)) {
+        data = data.items || data.students || data.data || [];
+      }
+      setStudents(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("O'quvchilarni yuklashda xato:", err);
     }
@@ -232,54 +236,23 @@ export default function PaymentsPage() {
             </div>
             <form onSubmit={handleSubmit}>
               <div className="modal-body">
-                {/* O'quvchi qidirish va tanlash */}
+                {/* O'quvchi tanlash */}
                 <div className="form-group">
-                  <label className="form-label">O'quvchini qidiring (ism yoki telefon)</label>
-                  <input
-                    type="text"
+                  <label className="form-label">O'quvchini tanlang</label>
+                  <select
                     className="form-control"
-                    placeholder="Ismini yoki telefon raqamini yozing..."
-                    value={searchQuery}
-                    onChange={e => { setSearchQuery(e.target.value); setForm({ ...form, student_id: '' }); }}
-                    autoFocus
-                  />
-                  {searchQuery && !form.student_id && (
-                    <div className="student-search-results">
-                      {filteredStudents.length === 0 ? (
-                        <div className="student-search-empty">O'quvchi topilmadi</div>
-                      ) : (
-                        filteredStudents.slice(0, 6).map(s => (
-                          <button
-                            key={s.id}
-                            type="button"
-                            className="student-search-item"
-                            onClick={() => handleSelectStudent(s)}
-                          >
-                            <div className="student-search-name">{s.full_name}</div>
-                            <div className="student-search-phone">{s.phone}</div>
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  )}
+                    value={form.student_id}
+                    onChange={e => setForm({ ...form, student_id: e.target.value })}
+                    required
+                  >
+                    <option value="">-- O'quvchini tanlang --</option>
+                    {students.map(s => (
+                      <option key={s.id} value={s.id}>
+                        {s.full_name} ({s.phone})
+                      </option>
+                    ))}
+                  </select>
                 </div>
-
-                {/* Tanlangan o'quvchi ma'lumotlari */}
-                {selectedStudent && (
-                  <div className="selected-student-card">
-                    <div className="selected-student-avatar">
-                      {selectedStudent.full_name?.[0]?.toUpperCase() || '?'}
-                    </div>
-                    <div className="selected-student-info">
-                      <div className="selected-student-name">{selectedStudent.full_name}</div>
-                      <div className="selected-student-phone">{selectedStudent.phone}</div>
-                    </div>
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => {
-                      setForm({ ...form, student_id: '' });
-                      setSearchQuery('');
-                    }}>✕</button>
-                  </div>
-                )}
 
                 <div className="form-group">
                   <label className="form-label">Summa (so'm)</label>

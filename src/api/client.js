@@ -83,6 +83,7 @@ export const ReceptionAPI = {
   unenroll: (sid, gid) => client.delete(`/reception/students/${sid}/unenroll/${gid}`),
   groups: () => client.get('/reception/groups'),
   createGroup: (data) => client.post('/reception/groups', data),
+  teachers: () => client.get('/reception/teachers'),
   payments: (sid, month) => client.get(`/reception/payments?${sid ? `student_id=${sid}&` : ''}${month ? `month=${month}` : ''}`),
   createPayment: (data) => client.post('/reception/payments', data),
   updatePayment: (id, data) => client.put(`/reception/payments/${id}`, data),

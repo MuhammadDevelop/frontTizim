@@ -194,9 +194,8 @@ export default function AttendancePage() {
                           {isSaved ? (
                             <span style={{ 
                               display: 'inline-flex', alignItems: 'center', gap: 6,
-                              padding: '4px 8px', borderRadius: 4, fontSize: '0.85rem', fontWeight: 600,
+                              fontSize: '0.9rem', fontWeight: 600,
                               color: STATUS_OPTIONS.find(o => o.value === records[s.student_id])?.color,
-                              background: STATUS_OPTIONS.find(o => o.value === records[s.student_id])?.color + '15'
                             }}>
                               {STATUS_OPTIONS.find(o => o.value === records[s.student_id])?.label}
                             </span>

@@ -19,6 +19,7 @@ export default function AttendancePage() {
   const [loadingGroups, setLoadingGroups] = useState(true);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showReceipt, setShowReceipt] = useState(false);
 
   useEffect(() => {
     const fetchGroups = async () => {
@@ -94,7 +95,7 @@ export default function AttendancePage() {
         })),
       };
       await TeacherAPI.markAttendance(data);
-      alert("Davomat muvaffaqiyatli saqlandi!");
+      setShowReceipt(true);
     } catch (err) {
       alert("Davomatni saqlashda xato: " + (err.response?.data?.detail || err.message));
     } finally {
@@ -229,6 +230,53 @@ export default function AttendancePage() {
               </div>
             </>
           )}
+        </div>
+      )}
+
+      {showReceipt && (
+        <div className="modal-backdrop">
+          <div className="modal" style={{ maxWidth: 450 }}>
+            <div className="modal-header">
+              <h3 className="modal-title">Davomat saqlandi</h3>
+              <button className="icon-btn" onClick={() => setShowReceipt(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 64, height: 64, borderRadius: '50%', background: 'rgba(67,217,173,0.15)', color: 'var(--success)', fontSize: 32, marginBottom: 12 }}>
+                  <FiCheckCircle />
+                </div>
+                <h4 style={{ margin: 0 }}>Davomat muvaffaqiyatli saqlandi!</h4>
+                <p className="text-muted" style={{ margin: '4px 0 0 0', fontSize: '0.9rem' }}>Sana: {fmtDate(date)}</p>
+              </div>
+              
+              <div style={{ background: 'var(--bg-secondary)', padding: 16, borderRadius: 8 }}>
+                <h5 style={{ marginTop: 0, marginBottom: 12, fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Xulosa</h5>
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span>Jami o'quvchilar:</span>
+                  <strong>{students.length} ta</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span style={{ color: 'var(--success)' }}>Keldi:</span>
+                  <strong>{students.filter(s => records[s.student_id] === 'present').length} ta</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span style={{ color: 'var(--danger)' }}>Kelmadi:</span>
+                  <strong>{students.filter(s => records[s.student_id] === 'absent').length} ta</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--warning)' }}>Kechikdi:</span>
+                  <strong>{students.filter(s => records[s.student_id] === 'late').length} ta</strong>
+                </div>
+              </div>
+              
+              <div style={{ marginTop: 24 }}>
+                <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => setShowReceipt(false)}>
+                  Yopish
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </>

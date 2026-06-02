@@ -41,23 +41,34 @@ export default function AttendancePage() {
       setRecords({});
       return;
     }
-    const fetchStudents = async () => {
+    const fetchStudentsAndAttendance = async () => {
       setLoadingStudents(true);
       try {
-        const res = await TeacherAPI.groupStudents(selectedGroup);
-        const list = Array.isArray(res.data) ? res.data : res.data?.items || [];
+        const [studentsRes, attendanceRes] = await Promise.all([
+          TeacherAPI.groupStudents(selectedGroup),
+          TeacherAPI.attendance(selectedGroup, date, date)
+        ]);
+        
+        const list = Array.isArray(studentsRes.data) ? studentsRes.data : studentsRes.data?.items || [];
         setStudents(list);
-        const defaultRecords = {};
-        list.forEach(s => { defaultRecords[s.student_id] = 'present'; });
-        setRecords(defaultRecords);
+        
+        const existingAtt = Array.isArray(attendanceRes.data) ? attendanceRes.data : attendanceRes.data?.items || [];
+        
+        const initialRecords = {};
+        list.forEach(s => { 
+          // Find if there's an existing record for this student
+          const record = existingAtt.find(a => a.student_id === s.student_id);
+          initialRecords[s.student_id] = record ? record.status : 'present'; 
+        });
+        setRecords(initialRecords);
       } catch (err) {
-        alert("O'quvchilarni yuklashda xato: " + (err.response?.data?.detail || err.message));
+        alert("Ma'lumotlarni yuklashda xato: " + (err.response?.data?.detail || err.message));
       } finally {
         setLoadingStudents(false);
       }
     };
-    fetchStudents();
-  }, [selectedGroup]);
+    fetchStudentsAndAttendance();
+  }, [selectedGroup, date]);
 
   const handleStatusChange = (studentId, status) => {
     setRecords(prev => ({ ...prev, [studentId]: status }));

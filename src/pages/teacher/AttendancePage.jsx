@@ -48,7 +48,7 @@ export default function AttendancePage() {
         const list = Array.isArray(res.data) ? res.data : res.data?.items || [];
         setStudents(list);
         const defaultRecords = {};
-        list.forEach(s => { defaultRecords[s.id] = 'present'; });
+        list.forEach(s => { defaultRecords[s.student_id] = 'present'; });
         setRecords(defaultRecords);
       } catch (err) {
         alert("O'quvchilarni yuklashda xato: " + (err.response?.data?.detail || err.message));
@@ -78,8 +78,8 @@ export default function AttendancePage() {
         group_id: Number(selectedGroup),
         date: date,
         records: students.map(s => ({
-          student_id: s.id,
-          status: records[s.id] || 'present',
+          student_id: s.student_id,
+          status: records[s.student_id] || 'present',
         })),
       };
       await TeacherAPI.markAttendance(data);
@@ -174,7 +174,7 @@ export default function AttendancePage() {
                   </thead>
                   <tbody>
                     {students.map((s, i) => (
-                      <tr key={s.id}>
+                      <tr key={s.student_id}>
                         <td>{i + 1}</td>
                         <td style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{s.full_name}</td>
                         <td>
@@ -185,16 +185,16 @@ export default function AttendancePage() {
                                 style={{
                                   display: 'flex', alignItems: 'center', gap: 6,
                                   cursor: 'pointer', fontSize: '0.85rem',
-                                  color: records[s.id] === opt.value ? opt.color : 'var(--text-muted)',
-                                  fontWeight: records[s.id] === opt.value ? 600 : 400,
+                                  color: records[s.student_id] === opt.value ? opt.color : 'var(--text-muted)',
+                                  fontWeight: records[s.student_id] === opt.value ? 600 : 400,
                                 }}
                               >
                                 <input
                                   type="radio"
-                                  name={`status-${s.id}`}
+                                  name={`status-${s.student_id}`}
                                   value={opt.value}
-                                  checked={records[s.id] === opt.value}
-                                  onChange={() => handleStatusChange(s.id, opt.value)}
+                                  checked={records[s.student_id] === opt.value}
+                                  onChange={() => handleStatusChange(s.student_id, opt.value)}
                                   style={{ accentColor: opt.color }}
                                 />
                                 {opt.label}

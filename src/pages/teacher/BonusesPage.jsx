@@ -145,7 +145,7 @@ export default function BonusesPage() {
                   {loadingStudents ? 'Yuklanmoqda...' : "— O'quvchi tanlang —"}
                 </option>
                 {students.map(s => (
-                  <option key={s.id} value={s.id}>{s.full_name}</option>
+                  <option key={s.student_id} value={s.student_id}>{s.full_name}</option>
                 ))}
               </select>
             </div>

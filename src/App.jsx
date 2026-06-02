@@ -22,6 +22,7 @@ const RGroupsPage = lazy(() => import('./pages/reception/GroupsPage'));
 
 // Teacher
 const TMyGroupsPage = lazy(() => import('./pages/teacher/MyGroupsPage'));
+const TApplicationsPage = lazy(() => import('./pages/teacher/ApplicationsPage'));
 const TAttendancePage = lazy(() => import('./pages/teacher/AttendancePage'));
 const LessonsPage = lazy(() => import('./pages/teacher/LessonsPage'));
 const TTasksPage = lazy(() => import('./pages/teacher/TasksPage'));
@@ -141,6 +142,7 @@ export default function App() {
               } />
 
               {/* Teacher only */}
+              <Route path="applications" element={<TApplicationsPage />} />
               <Route path="lessons" element={<LessonsPage />} />
               <Route path="materials" element={<MaterialsPage />} />
 

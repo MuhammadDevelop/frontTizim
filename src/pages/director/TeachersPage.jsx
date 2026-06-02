@@ -22,7 +22,7 @@ export default function TeachersPage() {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState({ full_name: '', phone: '', password: '', subject: '' });
+  const [form, setForm] = useState({ full_name: '', phone: '', password: '', role: 'teacher', subject: '' });
 
   const load = () => {
     setLoading(true);
@@ -35,13 +35,13 @@ export default function TeachersPage() {
 
   const openAdd = () => {
     setEditId(null);
-    setForm({ full_name: '', phone: '', password: '', subject: '' });
+    setForm({ full_name: '', phone: '', password: '', role: 'teacher', subject: '' });
     setModal(true);
   };
 
   const openEdit = (t) => {
     setEditId(t.id);
-    setForm({ full_name: t.full_name, phone: t.phone, password: '', subject: t.subject || '' });
+    setForm({ full_name: t.full_name, phone: t.phone, password: '', role: t.role || 'teacher', subject: t.subject || '' });
     setModal(true);
   };
 
@@ -51,9 +51,9 @@ export default function TeachersPage() {
       const data = {
         full_name: form.full_name,
         phone: form.phone,
-        role: 'teacher',
+        role: form.role,
         is_active: true,
-        subject: form.subject || null,
+        subject: form.role === 'teacher' ? (form.subject || null) : null,
       };
       if (!editId) {
         if (!form.password || form.password.length < 6) { alert("Parol kamida 6 ta belgi"); return; }
@@ -84,7 +84,7 @@ export default function TeachersPage() {
   return (
     <>
       <div className="page-header">
-        <div><h2>👨‍🏫 O'qituvchilar</h2><p>Jami: {teachers.length} ta</p></div>
+        <div><h2>👥 Hodimlar (O'qituvchi / Reception)</h2><p>Jami: {teachers.length} ta</p></div>
         <div className="page-header-actions">
           <button className="btn btn-primary" onClick={openAdd}>+ Qo'shish</button>
         </div>
@@ -95,15 +95,15 @@ export default function TeachersPage() {
           <div className="loading-overlay"><div className="spinner" /></div>
         ) : !teachers.length ? (
           <div className="empty-state">
-            <div className="empty-state-icon">👨‍🏫</div>
-            <h4>O'qituvchilar yo'q</h4>
+            <div className="empty-state-icon">👥</div>
+            <h4>Hodimlar yo'q</h4>
           </div>
         ) : (
           <div className="table-wrapper">
             <table className="table">
               <thead>
                 <tr>
-                  <th>#</th><th>Ism</th><th>Telefon</th><th>Fan</th><th>Holat</th><th>Qo'shilgan</th><th>Amallar</th>
+                  <th>#</th><th>Ism</th><th>Telefon</th><th>Rol</th><th>Fan</th><th>Holat</th><th>Qo'shilgan</th><th>Amallar</th>
                 </tr>
               </thead>
               <tbody>
@@ -112,6 +112,11 @@ export default function TeachersPage() {
                     <td>{i + 1}</td>
                     <td>{t.full_name}</td>
                     <td>{t.phone}</td>
+                    <td>
+                      <span className={`badge ${t.role === 'teacher' ? 'badge-primary' : 'badge-warning'}`}>
+                        {t.role === 'teacher' ? "O'qituvchi" : "Reception"}
+                      </span>
+                    </td>
                     <td>
                       {t.subject ? (
                         <span className="badge badge-primary">{SUBJECT_LABELS[t.subject] || t.subject}</span>
@@ -147,7 +152,7 @@ export default function TeachersPage() {
         <div className="modal-overlay" onClick={() => setModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <div className="modal-title">{editId ? "O'qituvchini tahrirlash" : "Yangi O'qituvchi"}</div>
+              <div className="modal-title">{editId ? "Hodimni tahrirlash" : "Yangi Hodim"}</div>
               <button className="modal-close" onClick={() => setModal(false)}>✕</button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -163,15 +168,25 @@ export default function TeachersPage() {
                     onChange={e => setForm({...form, phone: e.target.value})} required />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Fan</label>
-                  <select className="form-control" value={form.subject}
-                    onChange={e => setForm({...form, subject: e.target.value})} required>
-                    <option value="">— Fanni tanlang —</option>
-                    {Object.entries(SUBJECT_LABELS).map(([val, label]) => (
-                      <option key={val} value={val}>{label}</option>
-                    ))}
+                  <label className="form-label">Rol</label>
+                  <select className="form-control" value={form.role}
+                    onChange={e => setForm({...form, role: e.target.value})} required>
+                    <option value="teacher">O'qituvchi</option>
+                    <option value="reception">Reception</option>
                   </select>
                 </div>
+                {form.role === 'teacher' && (
+                  <div className="form-group">
+                    <label className="form-label">Fan</label>
+                    <select className="form-control" value={form.subject}
+                      onChange={e => setForm({...form, subject: e.target.value})} required>
+                      <option value="">— Fanni tanlang —</option>
+                      {Object.entries(SUBJECT_LABELS).map(([val, label]) => (
+                        <option key={val} value={val}>{label}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <div className="form-group">
                   <label className="form-label">{editId ? 'Yangi parol (ixtiyoriy)' : 'Parol'}</label>
                   <input type="password" className="form-control" value={form.password}

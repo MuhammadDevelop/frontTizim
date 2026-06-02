@@ -74,7 +74,7 @@ export default function DashboardLayout() {
     ],
     director: [
       { to: 'dashboard', icon: '📊', label: t('nav.dashboard'), section: t('section.main') },
-      { to: 'teachers', icon: '👨‍🏫', label: t('nav.teachers'), section: t('section.staff') },
+      { to: 'teachers', icon: '👨‍🏫', label: 'Hodimlar', section: t('section.staff') },
       { to: 'courses', icon: '📚', label: t('nav.courses'), section: t('section.education') },
       { to: 'groups', icon: '👥', label: t('nav.groups'), section: t('section.education') },
       { to: 'finance', icon: '💰', label: t('nav.finance'), section: t('section.report') },
@@ -86,6 +86,7 @@ export default function DashboardLayout() {
       { to: 'payments', icon: '💳', label: t('nav.payments'), section: t('section.finance') },
     ],
     teacher: [
+      { to: 'applications', icon: '📄', label: 'Arizalar', section: t('section.main') },
       { to: 'my-groups', icon: '👥', label: t('nav.myGroups'), section: t('section.main') },
       { to: 'attendance', icon: '✅', label: t('nav.attendance'), section: t('section.lesson') },
       { to: 'lessons', icon: '📖', label: t('nav.lessons'), section: t('section.lesson') },

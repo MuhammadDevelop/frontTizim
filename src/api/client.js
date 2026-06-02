@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'https://natija-ro6w.onrender.com/api/v1';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'; // Local backend!
 
 const client = axios.create({
   baseURL: API_BASE,
@@ -103,6 +103,8 @@ export const TeacherAPI = {
   addBonus: (data) => client.post('/teacher/bonuses', data),
   materials: (cid) => client.get(`/teacher/materials/course/${cid}`),
   addMaterial: (data) => client.post('/teacher/materials', data),
+  applications: (level, status) => client.get(`/teacher/applications?${level ? `level=${level}&` : ''}${status ? `status=${status}` : ''}`),
+  createGroupFromApplications: (data) => client.post('/teacher/applications/create-group', data),
 };
 
 // ═══ STUDENT ═══

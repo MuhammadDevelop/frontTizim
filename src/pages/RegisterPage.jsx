@@ -220,7 +220,7 @@ export default function RegisterPage() {
         <div className="auth-left-panel">
           <div className="brand-showcase">
             <div className="brand-logo-container float-anim">
-              <span className="brand-logo-emoji">🚀</span>
+              <img src="/logo.png" alt="Logo" style={{width: '100%', height: '100%', objectFit: 'cover', borderRadius: '20px'}} />
             </div>
             <h1 className="brand-title">Xush Kelibsiz!</h1>
             <p className="brand-desc">Zamonaviy ta'lim, kuchli ustozlar va interaktiv platforma orqali kelajagingizni quring.</p>

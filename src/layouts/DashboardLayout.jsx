@@ -138,7 +138,9 @@ export default function DashboardLayout() {
       {/* Sidebar */}
       <aside className={`sidebar${sidebarOpen ? ' open' : ''}`}>
         <div className="sidebar-brand">
-          <div className="brand-logo">🏫</div>
+          <div className="brand-logo" style={{overflow: 'hidden', padding: 0}}>
+            <img src="/logo.png" alt="Logo" style={{width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit'}} />
+          </div>
           <div>
             <div className="brand-title">{t('app.name')}</div>
             <div className="brand-subtitle">{t('app.subtitle')}</div>

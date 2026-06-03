@@ -271,23 +271,36 @@
   width: 100%;
   padding: 14px 15px 14px 45px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-input, rgba(255, 255, 255, 0.15));
+  background: var(--bg-input, rgba(255, 255, 255, 0.05));
   color: var(--text-color);
   font-size: 15px;
   transition: all 0.3s;
 }
 
 .form-control:hover {
-  border-color: rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--primary, #6366f1);
 }
 
 .form-control:focus {
   outline: none;
   border-color: #6366f1;
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
-  background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="light"] .form-control {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .form-control:hover {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="light"] .form-control:focus {
+  background: #fff;
+  border-color: #6366f1;
 }
 
 .password-toggle-btn {

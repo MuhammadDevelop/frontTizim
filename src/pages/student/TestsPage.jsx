@@ -65,7 +65,41 @@ const DIFF_CLR = {
 
 export default function TestsPage() {
   const { t } = useLanguage();
-  const [tests] = useState(DEMO_TESTS);
+  const [tests, setTests] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    import('../../api/client').then(({ StudentAPI }) => {
+      StudentAPI.tasks()
+        .then(r => {
+          const data = Array.isArray(r.data) ? r.data : (r.data?.items || []);
+          const apiTests = data
+            .filter(t => t.type === 'test')
+            .map(t => ({
+              id: t.id,
+              subject: 'Test',
+              title: t.title || t.task_title,
+              description: t.description,
+              difficulty: 'medium',
+              duration: 0,
+              questionsCount: 0,
+              status: t.score != null || t.submitted_at ? 'completed' : 'available',
+              score: t.score != null ? (t.score / (t.max_score || 100)) * 100 : null,
+              passingScore: 60,
+              maxScore: t.max_score,
+              due_date: t.due_date,
+              questions: []
+            }));
+          setTests([...apiTests, ...DEMO_TESTS]);
+        })
+        .catch(() => {
+          setTests(DEMO_TESTS);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    });
+  }, []);
   const [activeTest, setActiveTest] = useState(null);
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -132,6 +166,26 @@ export default function TestsPage() {
 
   // ── Active Test
   if (activeTest) {
+    if (!activeTest.questions || activeTest.questions.length === 0) {
+      return (
+        <div className="test-active-page">
+          <div className="test-active-header">
+            <div><h3>{activeTest.title}</h3></div>
+          </div>
+          <div className="test-question-card" style={{ textAlign: 'center', padding: '40px 20px' }}>
+            <div style={{ fontSize: '4rem', marginBottom: 16 }}>📝</div>
+            <h3 style={{ marginBottom: 16 }}>Bu test oflayn yoki boshqa platformada o'tkaziladi</h3>
+            <p className="text-muted">{activeTest.description}</p>
+            {activeTest.maxScore && <div className="mt-16"><span className="badge badge-primary">Max ball: {activeTest.maxScore}</span></div>}
+            {activeTest.due_date && <div className="mt-8"><span className="text-muted">Muddat: {new Date(activeTest.due_date).toLocaleDateString()}</span></div>}
+          </div>
+          <div className="test-nav" style={{ justifyContent: 'center' }}>
+            <button className="btn btn-secondary" onClick={() => setActiveTest(null)}>← {t('app.back')}</button>
+          </div>
+        </div>
+      );
+    }
+
     const q = activeTest.questions[currentQ];
     const prog = ((currentQ + 1) / activeTest.questions.length) * 100;
     return (

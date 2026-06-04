@@ -8,7 +8,14 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    StudentAPI.tasks().then(r => setTasks(Array.isArray(r.data) ? r.data : [])).catch(() => {}).finally(() => setLoading(false));
+    StudentAPI.tasks()
+      .then(r => {
+        const data = Array.isArray(r.data) ? r.data : (r.data?.items || []);
+        // Only show tasks that are NOT tests (e.g., homework, classwork)
+        setTasks(data.filter(t => t.type !== 'test'));
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div className="loading-overlay"><div className="spinner spinner-lg" /></div>;
@@ -20,7 +27,11 @@ export default function TasksPage() {
         <div className="table-wrapper"><table className="table">
           <thead><tr><th>#</th><th>Vazifa</th><th>Ball</th><th>Holat</th><th>Muddat</th></tr></thead>
           <tbody>{tasks.map((t,i) => (
-            <tr key={t.id || i}><td>{i+1}</td><td>{t.title || t.task_title}</td>
+            <tr key={t.id || i}><td>{i+1}</td>
+              <td>
+                <div style={{ fontWeight: 500 }}>{t.title || t.task_title}</div>
+                {t.description && <div className="text-sm text-muted">{t.description}</div>}
+              </td>
               <td>{t.score != null ? <span className="badge badge-success">{t.score}/{t.max_score || 100}</span> : <span className="badge badge-muted">Baholanmagan</span>}</td>
               <td>{t.submitted_at ? <span className="badge badge-success">Topshirildi</span> : <span className="badge badge-warning">Kutilmoqda</span>}</td>
               <td>{fmtDate(t.due_date)}</td></tr>

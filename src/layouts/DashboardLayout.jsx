@@ -98,6 +98,7 @@ export default function DashboardLayout() {
       { to: 'attendance', icon: '✅', label: t('nav.sAttendance'), section: t('section.main'), alwaysOpen: true },
       { to: 'my-groups', icon: '👥', label: t('nav.sMyGroups'), section: t('section.main') },
       { to: 'tasks', icon: '📝', label: t('nav.sTasks'), section: t('section.learning') },
+      { to: 'materials', icon: '📁', label: t('nav.materials') || 'Materiallar', section: t('section.learning') },
       { to: 'grades', icon: '🏆', label: t('nav.grades'), section: t('section.learning') },
       { to: 'tests', icon: '📋', label: t('nav.tests'), section: t('section.learning') },
       { to: 'bonuses', icon: '⭐', label: t('nav.sBonuses'), section: t('section.learning') },

@@ -11,8 +11,10 @@ export default function TasksPage() {
     StudentAPI.tasks()
       .then(r => {
         const data = Array.isArray(r.data) ? r.data : (r.data?.items || []);
+        // Handle nested task object if returned by backend
+        const mapped = data.map(t => ({ ...t, ...(t.task || {}) }));
         // Only show tasks that are NOT tests (e.g., homework, classwork)
-        setTasks(data.filter(t => t.type !== 'test'));
+        setTasks(mapped.filter(t => t.type !== 'test'));
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -33,7 +35,7 @@ export default function TasksPage() {
                 {t.description && <div className="text-sm text-muted">{t.description}</div>}
               </td>
               <td>{t.score != null ? <span className="badge badge-success">{t.score}/{t.max_score || 100}</span> : <span className="badge badge-muted">Baholanmagan</span>}</td>
-              <td>{t.submitted_at ? <span className="badge badge-success">Topshirildi</span> : <span className="badge badge-warning">Kutilmoqda</span>}</td>
+              <td>{t.submitted_at || t.score != null ? <span className="badge badge-success">Topshirildi</span> : <span className="badge badge-warning">Kutilmoqda</span>}</td>
               <td>{fmtDate(t.due_date)}</td></tr>
           ))}</tbody>
         </table></div>}

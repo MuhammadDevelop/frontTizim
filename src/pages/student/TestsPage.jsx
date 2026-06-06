@@ -73,7 +73,8 @@ export default function TestsPage() {
       StudentAPI.tasks()
         .then(r => {
           const data = Array.isArray(r.data) ? r.data : (r.data?.items || []);
-          const apiTests = data
+          const mapped = data.map(t => ({ ...t, ...(t.task || {}) }));
+          const apiTests = mapped
             .filter(t => t.type === 'test')
             .map(t => ({
               id: t.id,

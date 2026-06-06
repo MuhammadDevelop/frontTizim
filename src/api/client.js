@@ -118,7 +118,7 @@ export const StudentAPI = {
   gradesSummary: () => client.get('/student/grades/summary'),
   bonuses: () => client.get('/student/bonuses'),
   payments: () => client.get('/student/payments'),
-  materials: () => client.get('/student/materials'),
+  materials: (cid) => client.get(`/teacher/materials/course/${cid}`),
 };
 
 export default client;

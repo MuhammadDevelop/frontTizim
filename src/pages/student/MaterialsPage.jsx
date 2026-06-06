@@ -11,10 +11,30 @@ export default function MaterialsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    StudentAPI.materials()
-      .then(res => setMaterials(Array.isArray(res.data) ? res.data : res.data?.items || []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    const fetchMaterials = async () => {
+      try {
+        const groupsRes = await StudentAPI.myGroups();
+        const groups = Array.isArray(groupsRes.data) ? groupsRes.data : groupsRes.data?.items || [];
+        const courseIds = [...new Set(groups.map(g => g.course_id).filter(Boolean))];
+        
+        const allMaterials = [];
+        for (const cid of courseIds) {
+          try {
+            const mRes = await StudentAPI.materials(cid);
+            const mats = Array.isArray(mRes.data) ? mRes.data : mRes.data?.items || [];
+            allMaterials.push(...mats);
+          } catch (e) {
+            console.error("Failed to fetch materials for course", cid, e);
+          }
+        }
+        setMaterials(allMaterials);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMaterials();
   }, []);
 
   if (loading) {

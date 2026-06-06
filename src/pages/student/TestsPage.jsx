@@ -76,7 +76,7 @@ export default function TestsPage() {
         
         const groupsRes = await StudentAPI.myGroups();
         const groups = Array.isArray(groupsRes.data) ? groupsRes.data : groupsRes.data?.items || [];
-        const groupIds = [...new Set(groups.map(g => g.id || g.group_id).filter(Boolean))];
+        const groupIds = [...new Set(groups.flatMap(g => [g.group_id, g.group?.id, g.id]).filter(Boolean))];
 
         const allTasks = [];
         for (const gid of groupIds) {
@@ -103,10 +103,16 @@ export default function TestsPage() {
         });
 
         myScores.forEach(st => {
-           const taskId = st.task_id || st.task?.id;
-           if (!merged.find(t => t.id === taskId)) {
+           const taskId = st.task_id || st.task?.id || st.id;
+           if (taskId && !merged.find(t => t.id === taskId)) {
               const nested = st.task || {};
-              merged.push({ ...nested, ...st, id: taskId, type: nested.type || st.type });
+              merged.push({ 
+                 ...nested, 
+                 ...st, 
+                 id: taskId, 
+                 type: nested.type || st.type || 'homework',
+                 title: nested.title || st.title || st.task_title || 'Nomsiz test'
+              });
            }
         });
 

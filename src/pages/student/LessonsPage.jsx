@@ -15,7 +15,7 @@ export default function LessonsPage() {
       try {
         const groupsRes = await StudentAPI.myGroups();
         const groups = Array.isArray(groupsRes.data) ? groupsRes.data : groupsRes.data?.items || [];
-        const groupIds = [...new Set(groups.map(g => g.id || g.group_id).filter(Boolean))];
+        const groupIds = [...new Set(groups.flatMap(g => [g.group_id, g.group?.id, g.id]).filter(Boolean))];
         
         const allLessons = [];
         for (const gid of groupIds) {

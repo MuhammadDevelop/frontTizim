@@ -15,7 +15,7 @@ export default function MaterialsPage() {
       try {
         const groupsRes = await StudentAPI.myGroups();
         const groups = Array.isArray(groupsRes.data) ? groupsRes.data : groupsRes.data?.items || [];
-        const courseIds = [...new Set(groups.map(g => g.course_id || g.course?.id || g.group?.course_id).filter(Boolean))];
+        const courseIds = [...new Set(groups.flatMap(g => [g.course_id, g.course?.id, g.group?.course_id]).filter(Boolean))];
         
         const allMaterials = [];
         for (const cid of courseIds) {

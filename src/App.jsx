@@ -39,6 +39,7 @@ const SPaymentsPage = lazy(() => import('./pages/student/PaymentsPage'));
 const STestsPage = lazy(() => import('./pages/student/TestsPage'));
 const SProfilePage = lazy(() => import('./pages/student/ProfilePage'));
 const SMaterialsPage = lazy(() => import('./pages/student/MaterialsPage'));
+const SLessonsPage = lazy(() => import('./pages/student/LessonsPage'));
 
 // SuperAdmin
 const StatsPage = lazy(() => import('./pages/superadmin/StatsPage'));
@@ -149,9 +150,16 @@ export default function App() {
                 />
               } />
 
+              {/* Shared paths — role-based switching */}
+              <Route path="lessons" element={
+                <RoleSwitch
+                  teacher={<LessonsPage />}
+                  student={<SLessonsPage />}
+                />
+              } />
+
               {/* Teacher only */}
               <Route path="applications" element={<TApplicationsPage />} />
-              <Route path="lessons" element={<LessonsPage />} />
 
               {/* Student only */}
               <Route path="grades" element={<GradesPage />} />

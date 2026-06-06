@@ -69,37 +69,73 @@ export default function TestsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    import('../../api/client').then(({ StudentAPI }) => {
-      StudentAPI.tasks()
-        .then(r => {
-          const data = Array.isArray(r.data) ? r.data : (r.data?.items || []);
-          const mapped = data.map(t => ({ ...t, ...(t.task || {}) }));
-          const apiTests = mapped
-            .filter(t => t.type === 'test')
-            .map(t => ({
-              id: t.id,
-              subject: 'Test',
-              title: t.title || t.task_title,
-              description: t.description,
-              difficulty: 'medium',
-              duration: 0,
-              questionsCount: 0,
-              status: t.score != null || t.submitted_at ? 'completed' : 'available',
-              score: t.score != null ? (t.score / (t.max_score || 100)) * 100 : null,
-              passingScore: 60,
-              maxScore: t.max_score,
-              due_date: t.due_date,
-              questions: []
-            }));
-          setTests([...apiTests, ...DEMO_TESTS]);
-        })
-        .catch(() => {
-          setTests(DEMO_TESTS);
-        })
-        .finally(() => {
-          setLoading(false);
+    const fetchTests = async () => {
+      try {
+        const { default: client } = await import('../../api/client');
+        const { StudentAPI } = await import('../../api/client');
+        
+        const groupsRes = await StudentAPI.myGroups();
+        const groups = Array.isArray(groupsRes.data) ? groupsRes.data : groupsRes.data?.items || [];
+        const groupIds = [...new Set(groups.map(g => g.id || g.group_id).filter(Boolean))];
+
+        const allTasks = [];
+        for (const gid of groupIds) {
+          try {
+            const res = await client.get(`/teacher/tasks/group/${gid}`);
+            const data = Array.isArray(res.data) ? res.data : res.data?.items || [];
+            allTasks.push(...data);
+          } catch (e) {}
+        }
+
+        let myScores = [];
+        try {
+          const sr = await StudentAPI.tasks();
+          myScores = Array.isArray(sr.data) ? sr.data : sr.data?.items || [];
+        } catch (e) {}
+
+        const merged = allTasks.map(t => {
+          const stTask = myScores.find(st => st.task_id === t.id || st.task?.id === t.id);
+          if (stTask) {
+             const nested = stTask.task || {};
+             return { ...nested, ...t, ...stTask, id: t.id, type: t.type }; 
+          }
+          return t;
         });
-    });
+
+        myScores.forEach(st => {
+           const taskId = st.task_id || st.task?.id;
+           if (!merged.find(t => t.id === taskId)) {
+              const nested = st.task || {};
+              merged.push({ ...nested, ...st, id: taskId, type: nested.type || st.type });
+           }
+        });
+
+        const apiTests = merged
+          .filter(t => t.type === 'test')
+          .map(t => ({
+            id: t.id,
+            subject: 'Test',
+            title: t.title || t.task_title,
+            description: t.description,
+            difficulty: 'medium',
+            duration: 0,
+            questionsCount: 0,
+            status: t.score != null || t.submitted_at ? 'completed' : 'available',
+            score: t.score != null ? (t.score / (t.max_score || 100)) * 100 : null,
+            passingScore: 60,
+            maxScore: t.max_score,
+            due_date: t.due_date,
+            questions: []
+          }));
+        
+        setTests([...apiTests, ...DEMO_TESTS]);
+      } catch (err) {
+        setTests(DEMO_TESTS);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTests();
   }, []);
   const [activeTest, setActiveTest] = useState(null);
   const [currentQ, setCurrentQ] = useState(0);

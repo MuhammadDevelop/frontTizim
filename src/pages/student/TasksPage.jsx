@@ -8,16 +8,54 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    StudentAPI.tasks()
-      .then(r => {
-        const data = Array.isArray(r.data) ? r.data : (r.data?.items || []);
-        // Handle nested task object if returned by backend
-        const mapped = data.map(t => ({ ...t, ...(t.task || {}) }));
-        // Only show tasks that are NOT tests (e.g., homework, classwork)
-        setTasks(mapped.filter(t => t.type !== 'test'));
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    const fetchTasks = async () => {
+      try {
+        const groupsRes = await StudentAPI.myGroups();
+        const groups = Array.isArray(groupsRes.data) ? groupsRes.data : groupsRes.data?.items || [];
+        const groupIds = [...new Set(groups.map(g => g.id || g.group_id).filter(Boolean))];
+
+        const allTasks = [];
+        for (const gid of groupIds) {
+          try {
+            // Re-use client but point to teacher endpoint (assumes backend permits, which it likely does based on Materials implementation)
+            const { default: client } = await import('../../api/client');
+            const res = await client.get(`/teacher/tasks/group/${gid}`);
+            const data = Array.isArray(res.data) ? res.data : res.data?.items || [];
+            allTasks.push(...data);
+          } catch (e) {}
+        }
+
+        let myScores = [];
+        try {
+          const sr = await StudentAPI.tasks();
+          myScores = Array.isArray(sr.data) ? sr.data : sr.data?.items || [];
+        } catch (e) {}
+
+        const merged = allTasks.map(t => {
+          const stTask = myScores.find(st => st.task_id === t.id || st.task?.id === t.id);
+          if (stTask) {
+             const nested = stTask.task || {};
+             return { ...nested, ...t, ...stTask, id: t.id, type: t.type }; // preserve task base ID and type
+          }
+          return t;
+        });
+
+        // Add any personal tasks that might not have been caught in group
+        myScores.forEach(st => {
+           const taskId = st.task_id || st.task?.id;
+           if (!merged.find(t => t.id === taskId)) {
+              const nested = st.task || {};
+              merged.push({ ...nested, ...st, id: taskId, type: nested.type || st.type });
+           }
+        });
+
+        setTasks(merged.filter(t => t.type !== 'test'));
+      } catch (e) {
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTasks();
   }, []);
 
   if (loading) return <div className="loading-overlay"><div className="spinner spinner-lg" /></div>;

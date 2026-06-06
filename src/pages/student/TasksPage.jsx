@@ -14,7 +14,10 @@ export default function TasksPage() {
         // Handle nested task object if returned by backend
         const mapped = data.map(t => ({ ...t, ...(t.task || {}) }));
         // Only show tasks that are NOT tests (e.g., homework, classwork)
-        setTasks(mapped.filter(t => t.type !== 'test'));
+        setTasks(mapped.filter(t => {
+          const type = t.type || t.task_type || t.task?.type;
+          return type !== 'test';
+        }));
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -31,12 +34,12 @@ export default function TasksPage() {
           <tbody>{tasks.map((t,i) => (
             <tr key={t.id || i}><td>{i+1}</td>
               <td>
-                <div style={{ fontWeight: 500 }}>{t.title || t.task_title}</div>
-                {t.description && <div className="text-sm text-muted">{t.description}</div>}
+                <div style={{ fontWeight: 500 }}>{t.title || t.task_title || t.task?.title}</div>
+                {(t.description || t.task_description || t.task?.description) && <div className="text-sm text-muted">{t.description || t.task_description || t.task?.description}</div>}
               </td>
-              <td>{t.score != null ? <span className="badge badge-success">{t.score}/{t.max_score || 100}</span> : <span className="badge badge-muted">Baholanmagan</span>}</td>
+              <td>{t.score != null ? <span className="badge badge-success">{t.score}/{t.max_score || t.task_max_score || t.task?.max_score || 100}</span> : <span className="badge badge-muted">Baholanmagan</span>}</td>
               <td>{t.submitted_at || t.score != null ? <span className="badge badge-success">Topshirildi</span> : <span className="badge badge-warning">Kutilmoqda</span>}</td>
-              <td>{fmtDate(t.due_date)}</td></tr>
+              <td>{fmtDate(t.due_date || t.task_due_date || t.task?.due_date)}</td></tr>
           ))}</tbody>
         </table></div>}
       </div>

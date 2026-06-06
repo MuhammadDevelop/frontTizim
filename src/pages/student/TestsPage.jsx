@@ -75,20 +75,23 @@ export default function TestsPage() {
           const data = Array.isArray(r.data) ? r.data : (r.data?.items || []);
           const mapped = data.map(t => ({ ...t, ...(t.task || {}) }));
           const apiTests = mapped
-            .filter(t => t.type === 'test')
+            .filter(t => {
+              const type = t.type || t.task_type || t.task?.type;
+              return type === 'test';
+            })
             .map(t => ({
               id: t.id,
               subject: 'Test',
-              title: t.title || t.task_title,
-              description: t.description,
+              title: t.title || t.task_title || t.task?.title,
+              description: t.description || t.task_description || t.task?.description,
               difficulty: 'medium',
               duration: 0,
               questionsCount: 0,
               status: t.score != null || t.submitted_at ? 'completed' : 'available',
-              score: t.score != null ? (t.score / (t.max_score || 100)) * 100 : null,
+              score: t.score != null ? (t.score / (t.max_score || t.task_max_score || t.task?.max_score || 100)) * 100 : null,
               passingScore: 60,
-              maxScore: t.max_score,
-              due_date: t.due_date,
+              maxScore: t.max_score || t.task_max_score || t.task?.max_score,
+              due_date: t.due_date || t.task_due_date || t.task?.due_date,
               questions: []
             }));
           setTests([...apiTests, ...DEMO_TESTS]);

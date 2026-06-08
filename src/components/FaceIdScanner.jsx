@@ -83,7 +83,7 @@ export default function FaceIdScanner({ onFaceDetected, mode = 'register', stude
           const timeStr = new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
           onFaceDetected({ descriptor, type: 'register', photo: photoUrl, time: timeStr });
         }
-      }, 1000);
+      }, 500);
     } else if (mode === 'scan') {
       const faceMatcher = getFaceMatcher();
       if (!faceMatcher) {
@@ -106,7 +106,7 @@ export default function FaceIdScanner({ onFaceDetected, mode = 'register', stude
             setStatus('Yuz aniqlanmadi (yoki bazada yo\'q)');
           }
         }
-      }, 1500);
+      }, 500);
     }
   };
 

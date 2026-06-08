@@ -66,10 +66,8 @@ export default function DashboardLayout() {
     // Davomatni belgilash — session saqlash
     const todayKey = `mp_attendance_${new Date().toISOString().slice(0, 10)}`;
     sessionStorage.setItem(todayKey, 'done');
-    setTimeout(() => {
-      setAttendanceMarked(true);
-      setAttendanceLoading(false);
-    }, 800);
+    setAttendanceMarked(true);
+    setAttendanceLoading(false);
   };
   
   const handleFaceDetected = (data) => {

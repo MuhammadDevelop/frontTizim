@@ -306,12 +306,24 @@ export default function LoginPage() {
           </div>
 
           <div className="login-form-panel">
-            <div className="login-header" style={{ textAlign: 'center' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                <img src="/logo.png" alt="Logo" style={{width: '60px', height: '60px', objectFit: 'contain', borderRadius: '16px', background: 'rgba(108,99,255,0.1)', padding: '8px'}} />
-                <h2 style={{ margin: 0 }}>{t('auth.welcome')}</h2>
+            <div className="login-header" style={{ textAlign: 'center', marginBottom: '30px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', marginBottom: '10px' }}>
+                <div style={{
+                  width: '76px', height: '76px',
+                  borderRadius: '22px',
+                  background: 'linear-gradient(135deg, rgba(108,99,255,0.15) 0%, rgba(255,101,132,0.1) 100%)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: '0 12px 30px rgba(108,99,255,0.25)',
+                  border: '1px solid rgba(108,99,255,0.2)',
+                  backdropFilter: 'blur(10px)'
+                }}>
+                  <img src="/logo.png" alt="Logo" style={{width: '52px', height: '52px', objectFit: 'contain'}} />
+                </div>
+                <h2 style={{ margin: 0, fontSize: '30px', fontWeight: '800', background: 'linear-gradient(135deg, var(--primary, #6C63FF), var(--secondary, #FF6584))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                  {t('auth.welcome')}
+                </h2>
               </div>
-              <p>{t('auth.welcomeSub')}</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '15px' }}>{t('auth.welcomeSub')}</p>
             </div>
 
             <form className="login-form" onSubmit={handleSubmit}>

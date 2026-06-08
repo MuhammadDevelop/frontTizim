@@ -284,7 +284,7 @@ export default function LoginPage() {
       <div className="login-page">
         <div className="login-wrapper">
           <div className="login-brand">
-            <div><div className="brand-logo-lg"><img src="/logo.png" alt="Logo" style={{width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit'}} /></div></div>
+            <div><div className="brand-logo-lg"><img src="/logo.png" alt="Logo" style={{width: '100%', height: '100%', objectFit: 'contain', borderRadius: 'inherit', padding: '4px'}} /></div></div>
             <div className="brand-main">
               <h1>{t('auth.brandTitle').split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br/>}</span>)}</h1>
               <p>{t('auth.brandDesc')}</p>

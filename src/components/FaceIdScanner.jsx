@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { loadModels, getFaceDescriptor, getFaceMatcher } from '../../utils/faceApi';
+import { loadModels, getFaceDescriptor, getFaceMatcher } from '../utils/faceApi';
 
 export default function FaceIdScanner({ onFaceDetected, mode = 'register', studentId = null }) {
   const videoRef = useRef(null);

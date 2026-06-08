@@ -40,9 +40,17 @@ export default function DashboardLayout() {
       return;
     }
 
+    // Yuzni tekshirish
+    let hasFace = false;
+    if (user?.name) {
+      const data = JSON.parse(localStorage.getItem('face_id_data') || '{}');
+      hasFace = !!data[user.name];
+      setIsFaceRegistered(hasFace);
+    }
+
     // Sessiondan tekshirish
     const todayKey = `mp_attendance_${new Date().toISOString().slice(0, 10)}`;
-    if (sessionStorage.getItem(todayKey) === 'done') {
+    if (sessionStorage.getItem(todayKey) === 'done' && hasFace) {
       setAttendanceMarked(true);
       setAttendanceChecked(true);
       return;
@@ -50,12 +58,6 @@ export default function DashboardLayout() {
 
     setAttendanceChecked(true);
     setAttendanceMarked(false);
-    
-    // Yuzni tekshirish
-    if (user?.name) {
-      const data = JSON.parse(localStorage.getItem('face_id_data') || '{}');
-      setIsFaceRegistered(!!data[user.name]);
-    }
   }, [user]);
 
   // O'quvchi davomat tugmasini bosganda yoki yuz topilganda

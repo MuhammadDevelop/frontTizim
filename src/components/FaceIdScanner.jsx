@@ -21,6 +21,10 @@ export default function FaceIdScanner({ onFaceDetected, mode = 'register', stude
         if (!isMounted) return;
         setStatus('Kamera ulanmoqda...');
         
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error("Kameraga ulanish ruxsat etilmadi. (HTTPS yoki localhost kerak)");
+        }
+        
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
         if (!isMounted) {
           stream.getTracks().forEach(t => t.stop());

@@ -22,6 +22,12 @@ export default function AttendancePage() {
   const [submitting, setSubmitting] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+  const [faceLogs, setFaceLogs] = useState({});
+
+  useEffect(() => {
+    const logs = JSON.parse(localStorage.getItem('mp_face_logs') || '{}');
+    setFaceLogs(logs[date] || {});
+  }, [date, students, showScanner]);
 
   useEffect(() => {
     const fetchGroups = async () => {
@@ -187,6 +193,13 @@ export default function AttendancePage() {
                   const matchedStudent = students.find(s => s.full_name === data.studentId);
                   if (matchedStudent) {
                     handleStatusChange(matchedStudent.student_id, 'present');
+                    if (data.photo && data.time) {
+                      const logs = JSON.parse(localStorage.getItem('mp_face_logs') || '{}');
+                      if (!logs[date]) logs[date] = {};
+                      logs[date][matchedStudent.full_name] = { time: data.time, photo: data.photo };
+                      localStorage.setItem('mp_face_logs', JSON.stringify(logs));
+                      setFaceLogs(logs[date]);
+                    }
                   }
                 }} 
               />
@@ -219,7 +232,21 @@ export default function AttendancePage() {
                     {students.map((s, i) => (
                       <tr key={s.student_id}>
                         <td>{i + 1}</td>
-                        <td style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{s.full_name}</td>
+                        <td style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            {faceLogs[s.full_name]?.photo ? (
+                              <img src={faceLogs[s.full_name].photo} alt={s.full_name} style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)' }} />
+                            ) : (
+                              <div style={{ width: 40, height: 40, borderRadius: '50%', backgroundColor: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>👤</div>
+                            )}
+                            <div>
+                              <div>{s.full_name}</div>
+                              {faceLogs[s.full_name]?.time && (
+                                <div style={{ fontSize: '0.8rem', color: 'var(--success)', marginTop: 4 }}>🕒 Face ID: {faceLogs[s.full_name].time}</div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
                         <td>
                           {isSaved ? (
                             <span style={{ 

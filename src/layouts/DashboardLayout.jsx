@@ -73,11 +73,22 @@ export default function DashboardLayout() {
   };
   
   const handleFaceDetected = (data) => {
+    const saveFaceLog = (studentName) => {
+      if (!data.photo || !data.time) return;
+      const todayKey = new Date().toISOString().slice(0, 10);
+      const logs = JSON.parse(localStorage.getItem('mp_face_logs') || '{}');
+      if (!logs[todayKey]) logs[todayKey] = {};
+      logs[todayKey][studentName] = { time: data.time, photo: data.photo };
+      localStorage.setItem('mp_face_logs', JSON.stringify(logs));
+    };
+
     if (data.type === 'register' && user?.name) {
       saveFaceData(user.name, data.descriptor);
       setIsFaceRegistered(true);
+      saveFaceLog(user.name);
       handleMarkAttendance(); // Registration counts as attendance
     } else if (data.type === 'scan' && data.studentId === user.name) {
+      saveFaceLog(user.name);
       handleMarkAttendance();
     }
   };

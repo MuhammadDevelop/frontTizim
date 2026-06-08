@@ -58,6 +58,19 @@ export default function FaceIdScanner({ onFaceDetected, mode = 'register', stude
     };
   }, [mode]);
 
+  const capturePhoto = () => {
+    if (!videoRef.current) return null;
+    const canvas = document.createElement('canvas');
+    canvas.width = videoRef.current.videoWidth || 640;
+    canvas.height = videoRef.current.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    // Mirror the drawing since the video is mirrored via CSS scaleX(-1)
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/jpeg', 0.8);
+  };
+
   const handleVideoPlay = () => {
     if (mode === 'register') {
       intervalRef.current = setInterval(async () => {
@@ -66,7 +79,9 @@ export default function FaceIdScanner({ onFaceDetected, mode = 'register', stude
         if (descriptor) {
           clearInterval(intervalRef.current);
           setStatus('Yuz muvaffaqiyatli aniqlandi! Saqlanmoqda...');
-          onFaceDetected({ descriptor, type: 'register' });
+          const photoUrl = capturePhoto();
+          const timeStr = new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
+          onFaceDetected({ descriptor, type: 'register', photo: photoUrl, time: timeStr });
         }
       }, 1000);
     } else if (mode === 'scan') {
@@ -84,7 +99,9 @@ export default function FaceIdScanner({ onFaceDetected, mode = 'register', stude
           // Only trigger if we have a confident match (distance < 0.45)
           if (match.label !== 'unknown' && match.distance < 0.45) {
             setStatus(`${match.label} aniqlandi! (${(100 - match.distance * 100).toFixed(0)}%)`);
-            onFaceDetected({ studentId: match.label, type: 'scan' });
+            const photoUrl = capturePhoto();
+            const timeStr = new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
+            onFaceDetected({ studentId: match.label, type: 'scan', photo: photoUrl, time: timeStr });
           } else {
             setStatus('Yuz aniqlanmadi (yoki bazada yo\'q)');
           }

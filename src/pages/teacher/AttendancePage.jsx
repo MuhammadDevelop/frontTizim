@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { TeacherAPI } from '../../api/client';
-import { FiCheckCircle, FiUsers } from 'react-icons/fi';
+import { FiCheckCircle, FiUsers, FiCamera } from 'react-icons/fi';
+import FaceIdScanner from '../../components/FaceIdScanner';
 
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('uz-UZ', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
 
@@ -20,6 +21,7 @@ export default function AttendancePage() {
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
 
   useEffect(() => {
     const fetchGroups = async () => {
@@ -156,12 +158,40 @@ export default function AttendancePage() {
 
       {selectedGroup && (
         <div className="card mt-24">
-          <div className="card-header">
-            <h3 className="card-title">O'quvchilar ro'yxati</h3>
-            <span className="badge badge-primary">
-              <FiUsers style={{ marginRight: 4 }} /> {students.length} o'quvchi
-            </span>
+          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h3 className="card-title">O'quvchilar ro'yxati</h3>
+              <span className="badge badge-primary">
+                <FiUsers style={{ marginRight: 4 }} /> {students.length} o'quvchi
+              </span>
+            </div>
+            {!isSaved && (
+              <button 
+                className={`btn ${showScanner ? 'btn-danger' : 'btn-success'}`} 
+                onClick={() => setShowScanner(!showScanner)}
+              >
+                <FiCamera style={{ marginRight: 4 }} /> 
+                {showScanner ? 'Skanerni yopish' : 'Face ID Skaner'}
+              </button>
+            )}
           </div>
+          
+          {showScanner && !isSaved && (
+            <div style={{ padding: '20px', backgroundColor: '#f8f9fa', borderBottom: '1px solid #eee' }}>
+              <FaceIdScanner 
+                mode="scan" 
+                onFaceDetected={(data) => {
+                  // Mofidy the records state dynamically when a face is detected
+                  // The data.studentId corresponds to user.name, but in the records state we use s.student_id
+                  // We need to find the student_id that matches the full_name
+                  const matchedStudent = students.find(s => s.full_name === data.studentId);
+                  if (matchedStudent) {
+                    handleStatusChange(matchedStudent.student_id, 'present');
+                  }
+                }} 
+              />
+            </div>
+          )}
 
           {loadingStudents ? (
             <div className="loading-overlay">

@@ -10,33 +10,10 @@ export default function FaceIdScanner({ onFaceDetected, mode = 'register', stude
   const streamRef = useRef(null);
   const intervalRef = useRef(null);
 
-  const playSnapSound = () => {
-    try {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
-      
-      oscillator.type = 'square';
-      oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.05);
-      
-      gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
-      
-      oscillator.start();
-      oscillator.stop(audioCtx.currentTime + 0.05);
-    } catch(e) {
-      console.warn("Audio failed", e);
-    }
-  };
-
   const triggerSnap = () => {
     setFlash(true);
-    playSnapSound();
-    setTimeout(() => setFlash(false), 200);
+    // 300ms dan keyin ekranni asl holiga qaytarish
+    setTimeout(() => setFlash(false), 300);
   };
 
   useEffect(() => {
@@ -173,9 +150,9 @@ export default function FaceIdScanner({ onFaceDetected, mode = 'register', stude
           />
           {flash && (
             <div style={{
-              position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-              backgroundColor: '#fff', zIndex: 100, opacity: 0.8,
-              transition: 'opacity 0.2s ease-out'
+              position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+              backgroundColor: '#fff', zIndex: 999999, opacity: 1,
+              transition: 'opacity 0.3s ease-out'
             }} />
           )}
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '15px', background: 'rgba(0,0,0,0.6)', color: '#fff', textAlign: 'center', fontWeight: 'bold', zIndex: 10 }}>

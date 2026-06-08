@@ -6,8 +6,38 @@ export default function FaceIdScanner({ onFaceDetected, mode = 'register', stude
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState('Modellar yuklanmoqda...');
   const [error, setError] = useState(null);
+  const [flash, setFlash] = useState(false);
   const streamRef = useRef(null);
   const intervalRef = useRef(null);
+
+  const playSnapSound = () => {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      oscillator.type = 'square';
+      oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.05);
+      
+      gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.05);
+    } catch(e) {
+      console.warn("Audio failed", e);
+    }
+  };
+
+  const triggerSnap = () => {
+    setFlash(true);
+    playSnapSound();
+    setTimeout(() => setFlash(false), 200);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -80,8 +110,11 @@ export default function FaceIdScanner({ onFaceDetected, mode = 'register', stude
           clearInterval(intervalRef.current);
           setStatus('Yuz muvaffaqiyatli aniqlandi! Saqlanmoqda...');
           const photoUrl = capturePhoto();
+          triggerSnap();
           const timeStr = new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
-          onFaceDetected({ descriptor, type: 'register', photo: photoUrl, time: timeStr });
+          setTimeout(() => {
+            onFaceDetected({ descriptor, type: 'register', photo: photoUrl, time: timeStr });
+          }, 300); // Give time for flash to show
         }
       }, 500);
     } else if (mode === 'scan') {
@@ -98,10 +131,14 @@ export default function FaceIdScanner({ onFaceDetected, mode = 'register', stude
           const match = faceMatcher.findBestMatch(descriptor);
           // Only trigger if we have a confident match (distance < 0.45)
           if (match.label !== 'unknown' && match.distance < 0.45) {
+            clearInterval(intervalRef.current);
             setStatus(`${match.label} aniqlandi! (${(100 - match.distance * 100).toFixed(0)}%)`);
             const photoUrl = capturePhoto();
+            triggerSnap();
             const timeStr = new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
-            onFaceDetected({ studentId: match.label, type: 'scan', photo: photoUrl, time: timeStr });
+            setTimeout(() => {
+              onFaceDetected({ studentId: match.label, type: 'scan', photo: photoUrl, time: timeStr });
+            }, 300); // Give time for flash to show
           } else {
             setStatus('Yuz aniqlanmadi (yoki bazada yo\'q)');
           }
@@ -134,7 +171,14 @@ export default function FaceIdScanner({ onFaceDetected, mode = 'register', stude
             onPlay={handleVideoPlay}
             style={{ width: '100%', height: 'auto', display: loading ? 'none' : 'block', transform: 'scaleX(-1)' }}
           />
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '15px', background: 'rgba(0,0,0,0.6)', color: '#fff', textAlign: 'center', fontWeight: 'bold' }}>
+          {flash && (
+            <div style={{
+              position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+              backgroundColor: '#fff', zIndex: 100, opacity: 0.8,
+              transition: 'opacity 0.2s ease-out'
+            }} />
+          )}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '15px', background: 'rgba(0,0,0,0.6)', color: '#fff', textAlign: 'center', fontWeight: 'bold', zIndex: 10 }}>
             {status}
           </div>
           {mode === 'scan' && (

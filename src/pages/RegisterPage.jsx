@@ -244,9 +244,9 @@ export default function RegisterPage() {
 
         <div className="auth-right-panel">
           <div className="auth-form-container">
-            <div className="auth-form-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '8px' }}>
-                <img src="/logo.png" alt="Logo" style={{width: '45px', height: '45px', objectFit: 'contain', borderRadius: '12px', background: 'rgba(108,99,255,0.1)', padding: '5px'}} />
+            <div className="auth-form-header" style={{ textAlign: 'center' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                <img src="/logo.png" alt="Logo" style={{width: '60px', height: '60px', objectFit: 'contain', borderRadius: '16px', background: 'rgba(108,99,255,0.1)', padding: '8px'}} />
                 <h2 style={{ margin: 0 }}>Ro'yxatdan O'tish</h2>
               </div>
               <p>Yangi o'quvchi profilini yarating</p>

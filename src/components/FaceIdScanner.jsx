@@ -9,6 +9,7 @@ export default function FaceIdScanner({ onFaceDetected, mode = 'register', stude
   const [flash, setFlash] = useState(false);
   const streamRef = useRef(null);
   const intervalRef = useRef(null);
+  const isDetecting = useRef(false);
 
   const triggerSnap = () => {
     setFlash(true);
@@ -81,7 +82,8 @@ export default function FaceIdScanner({ onFaceDetected, mode = 'register', stude
   const handleVideoPlay = () => {
     if (mode === 'register') {
       intervalRef.current = setInterval(async () => {
-        if (!videoRef.current) return;
+        if (!videoRef.current || isDetecting.current) return;
+        isDetecting.current = true;
         const descriptor = await getFaceDescriptor(videoRef.current);
         if (descriptor) {
           clearInterval(intervalRef.current);
@@ -93,6 +95,7 @@ export default function FaceIdScanner({ onFaceDetected, mode = 'register', stude
             onFaceDetected({ descriptor, type: 'register', photo: photoUrl, time: timeStr });
           }, 300); // Give time for flash to show
         }
+        isDetecting.current = false;
       }, 500);
     } else if (mode === 'scan') {
       const faceMatcher = getFaceMatcher();
@@ -102,12 +105,13 @@ export default function FaceIdScanner({ onFaceDetected, mode = 'register', stude
       }
       
       intervalRef.current = setInterval(async () => {
-        if (!videoRef.current) return;
+        if (!videoRef.current || isDetecting.current) return;
+        isDetecting.current = true;
         const descriptor = await getFaceDescriptor(videoRef.current);
         if (descriptor) {
           const match = faceMatcher.findBestMatch(descriptor);
-          // Only trigger if we have a confident match (distance < 0.45)
-          if (match.label !== 'unknown' && match.distance < 0.45) {
+          // Only trigger if we have a confident match (distance < 0.55)
+          if (match.label !== 'unknown' && match.distance < 0.55) {
             clearInterval(intervalRef.current);
             setStatus(`${match.label} aniqlandi! (${(100 - match.distance * 100).toFixed(0)}%)`);
             const photoUrl = capturePhoto();
@@ -120,6 +124,7 @@ export default function FaceIdScanner({ onFaceDetected, mode = 'register', stude
             setStatus('Yuz aniqlanmadi (yoki bazada yo\'q)');
           }
         }
+        isDetecting.current = false;
       }, 500);
     }
   };

@@ -80,6 +80,6 @@ export const getFaceMatcher = () => {
   
   if (labeledDescriptors.length === 0) return null;
   
-  // Use a threshold of 0.45 for stricter matching (default is 0.6)
-  return new window.faceapi.FaceMatcher(labeledDescriptors, 0.45);
+  // Use a threshold of 0.55 for matching (default is 0.6)
+  return new window.faceapi.FaceMatcher(labeledDescriptors, 0.55);
 };

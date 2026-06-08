@@ -245,7 +245,10 @@ export default function RegisterPage() {
         <div className="auth-right-panel">
           <div className="auth-form-container">
             <div className="auth-form-header">
-              <h2>Ro'yxatdan O'tish</h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '8px' }}>
+                <img src="/logo.png" alt="Logo" style={{width: '45px', height: '45px', objectFit: 'contain', borderRadius: '12px', background: 'rgba(108,99,255,0.1)', padding: '5px'}} />
+                <h2 style={{ margin: 0 }}>Ro'yxatdan O'tish</h2>
+              </div>
               <p>Yangi o'quvchi profilini yarating</p>
             </div>
 

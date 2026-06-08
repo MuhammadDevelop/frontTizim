@@ -307,7 +307,10 @@ export default function LoginPage() {
 
           <div className="login-form-panel">
             <div className="login-header">
-              <h2>{t('auth.welcome')}</h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '8px' }}>
+                <img src="/logo.png" alt="Logo" style={{width: '45px', height: '45px', objectFit: 'contain', borderRadius: '12px', background: 'rgba(108,99,255,0.1)', padding: '5px'}} />
+                <h2 style={{ margin: 0 }}>{t('auth.welcome')}</h2>
+              </div>
               <p>{t('auth.welcomeSub')}</p>
             </div>
 

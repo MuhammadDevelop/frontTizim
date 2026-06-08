@@ -65,12 +65,17 @@ export default function AttendancePage() {
         setIsSaved(existingAtt.length > 0);
         
         const initialRecords = {};
+        const loadedFaceLogs = { ...faceLogs };
         list.forEach(s => { 
           // Find if there's an existing record for this student
           const record = existingAtt.find(a => a.student_id === s.student_id);
           initialRecords[s.student_id] = record ? record.status : 'present'; 
+          if (record && record.photo && record.time) {
+             loadedFaceLogs[s.full_name] = { photo: record.photo, time: record.time };
+          }
         });
         setRecords(initialRecords);
+        setFaceLogs(loadedFaceLogs);
       } catch (err) {
         alert("Ma'lumotlarni yuklashda xato: " + (err.response?.data?.detail || err.message));
       } finally {
@@ -101,6 +106,8 @@ export default function AttendancePage() {
         records: students.map(s => ({
           student_id: s.student_id,
           status: records[s.student_id] || 'present',
+          photo: faceLogs[s.full_name]?.photo || null,
+          time: faceLogs[s.full_name]?.time || null,
         })),
       };
       await TeacherAPI.markAttendance(data);

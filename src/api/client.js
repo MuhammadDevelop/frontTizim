@@ -114,6 +114,7 @@ export const StudentAPI = {
   updateMe: (data) => client.put('/student/me', data),
   myGroups: () => client.get('/student/my-groups'),
   attendance: () => client.get('/student/attendance'),
+  markAttendance: (data) => client.post('/student/attendance', data),
   tasks: () => client.get('/student/tasks'),
   gradesSummary: () => client.get('/student/grades/summary'),
   bonuses: () => client.get('/student/bonuses'),

@@ -60,9 +60,15 @@ export default function DashboardLayout() {
     setAttendanceMarked(false);
   }, [user]);
 
-  // O'quvchi davomat tugmasini bosganda yoki yuz topilganda
-  const handleMarkAttendance = () => {
+  const handleMarkAttendance = async (photo, time) => {
     setAttendanceLoading(true);
+    try {
+      if (photo && time) {
+        await StudentAPI.markAttendance({ photo, time });
+      }
+    } catch (err) {
+      console.error("Failed to save to db:", err);
+    }
     // Davomatni belgilash — session saqlash
     const todayKey = `mp_attendance_${new Date().toISOString().slice(0, 10)}`;
     sessionStorage.setItem(todayKey, 'done');
@@ -84,10 +90,10 @@ export default function DashboardLayout() {
       saveFaceData(user.name, data.descriptor);
       setIsFaceRegistered(true);
       saveFaceLog(user.name);
-      handleMarkAttendance(); // Registration counts as attendance
+      handleMarkAttendance(data.photo, data.time); // Registration counts as attendance
     } else if (data.type === 'scan' && data.studentId === user.name) {
       saveFaceLog(user.name);
-      handleMarkAttendance();
+      handleMarkAttendance(data.photo, data.time);
     }
   };
 

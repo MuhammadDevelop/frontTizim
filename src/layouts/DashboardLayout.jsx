@@ -4,6 +4,8 @@ import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useState, useRef, useEffect } from 'react';
 import { StudentAPI } from '../api/client';
+import FaceIdScanner from '../components/FaceIdScanner';
+import { saveFaceData } from '../utils/faceApi';
 
 export default function DashboardLayout() {
   const { user, logout } = useAuth();
@@ -19,6 +21,7 @@ export default function DashboardLayout() {
   const [attendanceChecked, setAttendanceChecked] = useState(false);
   const [attendanceMarked, setAttendanceMarked] = useState(false);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
+  const [isFaceRegistered, setIsFaceRegistered] = useState(false);
 
   // Close lang dropdown on outside click
   useEffect(() => {
@@ -47,9 +50,15 @@ export default function DashboardLayout() {
 
     setAttendanceChecked(true);
     setAttendanceMarked(false);
+    
+    // Yuzni tekshirish
+    if (user?.name) {
+      const data = JSON.parse(localStorage.getItem('face_id_data') || '{}');
+      setIsFaceRegistered(!!data[user.name]);
+    }
   }, [user]);
 
-  // O'quvchi davomat tugmasini bosganda
+  // O'quvchi davomat tugmasini bosganda yoki yuz topilganda
   const handleMarkAttendance = () => {
     setAttendanceLoading(true);
     // Davomatni belgilash — session saqlash
@@ -59,6 +68,16 @@ export default function DashboardLayout() {
       setAttendanceMarked(true);
       setAttendanceLoading(false);
     }, 800);
+  };
+  
+  const handleFaceDetected = (data) => {
+    if (data.type === 'register' && user?.name) {
+      saveFaceData(user.name, data.descriptor);
+      setIsFaceRegistered(true);
+      handleMarkAttendance(); // Registration counts as attendance
+    } else if (data.type === 'scan' && data.studentId === user.name) {
+      handleMarkAttendance();
+    }
   };
 
   if (!user) return null;
@@ -239,19 +258,21 @@ export default function DashboardLayout() {
           {/* Student attendance gate overlay */}
           {isLocked && (
             <div className="attendance-gate">
-              <div className="attendance-gate-card">
-                <div className="attendance-gate-icon">✅</div>
-                <h2>Davomatni belgilang!</h2>
-                <p>Tizimning boshqa bo'limlariga kirish uchun avval bugungi davomatingizni tasdiqlang.</p>
-                <button
-                  className="btn btn-primary btn-lg"
-                  onClick={handleMarkAttendance}
-                  disabled={attendanceLoading}
-                  style={{ marginTop: 16, minWidth: 200 }}
-                >
-                  {attendanceLoading ? <span className="spinner" /> : '✅ Davomatni belgilash'}
-                </button>
-                <p style={{ marginTop: 16, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+              <div className="attendance-gate-card" style={{ maxWidth: '500px', width: '90%' }}>
+                <div className="attendance-gate-icon">📸</div>
+                <h2>{isFaceRegistered ? "Face ID orqali tasdiqlang" : "Face ID ro'yxatdan o'tkazish"}</h2>
+                <p style={{ marginBottom: '20px' }}>
+                  {isFaceRegistered 
+                    ? "Tizimga kirish uchun yuzingizni kameraga ko'rsating." 
+                    : "Siz hali Face ID sozlamagansiz. Davomat uchun yuzingizni kameraga qarab saqlang."}
+                </p>
+                
+                <FaceIdScanner 
+                  mode={isFaceRegistered ? "scan" : "register"} 
+                  onFaceDetected={handleFaceDetected} 
+                />
+                
+                <p style={{ marginTop: 24, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                   {new Date().toLocaleDateString('uz-UZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                 </p>
               </div>

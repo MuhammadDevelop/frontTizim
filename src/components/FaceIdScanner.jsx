@@ -34,6 +34,7 @@ export default function FaceIdScanner({ onFaceDetected, mode = 'register', stude
         streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(e => console.warn("Video play blocked:", e));
         }
         
         setLoading(false);

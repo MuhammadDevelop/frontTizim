@@ -55,11 +55,11 @@ export default function AttendancePage() {
     setScannerOpen(true);
   };
 
-  const handleScanAttendance = async (faceTemplate) => {
+  const handleScanAttendance = async (scanData) => {
     try {
       const res = await StudentAPI.faceAttendance({
         group_id: Number(selectedGroupId),
-        face_template: faceTemplate
+        encoding: scanData.encoding
       });
       alert(res.data.message || "Davomat muvaffaqiyatli tasdiqlandi!");
       setScannerOpen(false);
@@ -70,10 +70,11 @@ export default function AttendancePage() {
     }
   };
 
-  const handleEnrollFace = async (faceTemplate) => {
+  const handleEnrollFace = async (scanData) => {
     try {
-      const res = await StudentAPI.faceEnroll({
-        face_template: faceTemplate
+      const res = await StudentAPI.faceEnroll(me.id, {
+        encoding: scanData.encoding,
+        image_base64: scanData.image_base64
       });
       alert(res.data.message || "Face ID ro'yxatdan o'tkazildi!");
       setEnrollScannerOpen(false);

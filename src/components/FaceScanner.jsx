@@ -80,16 +80,23 @@ export default function FaceScanner({ isOpen, onClose, onScan, title = "Yuz orqa
         return;
       }
 
-      // 128 o'lchamli massivni (descriptor) string ga aylantirish
+      // 128 o'lchamli massivni (descriptor) olamiz
       const descriptorArray = Array.from(detection.descriptor);
-      const faceTemplate = JSON.stringify(descriptorArray);
+      
+      // Rasmga tushirish (off-screen canvas orqali)
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      const imageBase64 = canvas.toDataURL('image/jpeg', 0.8);
       
       setScanning(false);
       setSuccess(true);
       stopCamera();
       
       setTimeout(() => {
-        onScan(faceTemplate);
+        onScan({ encoding: descriptorArray, image_base64: imageBase64 });
       }, 500);
 
     } catch (err) {

@@ -139,8 +139,6 @@ export default function FaceScanner({ isOpen, onClose, onScan, title = "Yuz orqa
               <div style={{...cornerStyle, bottom: 0, right: 0, borderBottom: '4px solid #6C63FF', borderRight: '4px solid #6C63FF'}} />
             </div>
           )}
-          
-          <canvas ref={canvasRef} style={{ display: 'none' }} />
         </div>
 
         {/* Footer */}

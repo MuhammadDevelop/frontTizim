@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardLayout from './layouts/DashboardLayout';
 import { lazy, Suspense } from 'react';
+import AiChat from './components/AiChat';
 
 // ─── Lazy imports ────────────────────────────────────────
 
@@ -176,6 +177,7 @@ export default function App() {
           </Routes>
         </Suspense>
       </BrowserRouter>
+      <AiChat />
     </AuthProvider>
   );
 }

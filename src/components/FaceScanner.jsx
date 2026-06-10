@@ -1,13 +1,32 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { FiX, FiCamera, FiCheckCircle } from 'react-icons/fi';
+import * as faceapi from '@vladmandic/face-api';
 
 export default function FaceScanner({ isOpen, onClose, onScan, title = "Yuz orqali tasdiqlash" }) {
   const videoRef = useRef(null);
-  const canvasRef = useRef(null);
   const [stream, setStream] = useState(null);
   const [scanning, setScanning] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
+  const [modelsLoaded, setModelsLoaded] = useState(false);
+
+  useEffect(() => {
+    const loadModels = async () => {
+      try {
+        const MODEL_URL = '/models';
+        await Promise.all([
+          faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+        ]);
+        setModelsLoaded(true);
+      } catch (err) {
+        console.error("Modellarni yuklashda xatolik:", err);
+        setError("AI modellarini yuklab bo'lmadi.");
+      }
+    };
+    loadModels();
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -43,35 +62,41 @@ export default function FaceScanner({ isOpen, onClose, onScan, title = "Yuz orqa
     }
   };
 
-  const handleScan = () => {
-    if (!videoRef.current || !canvasRef.current) return;
+  const handleScan = async () => {
+    if (!videoRef.current || !modelsLoaded) return;
     
     setScanning(true);
+    setError(null);
     
-    // Simulate a cool scanning effect duration
-    setTimeout(() => {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      
-      const base64Image = canvas.toDataURL('image/jpeg');
+    try {
+      // Yuzni qidirish
+      const detection = await faceapi.detectSingleFace(videoRef.current, new faceapi.SsdMobilenetv1Options())
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+
+      if (!detection) {
+        setError("Yuz aniqlanmadi! Iltimos, kameraga to'g'ri qarang va yorug' joyda turing.");
+        setScanning(false);
+        return;
+      }
+
+      // 128 o'lchamli massivni (descriptor) string ga aylantirish
+      const descriptorArray = Array.from(detection.descriptor);
+      const faceTemplate = JSON.stringify(descriptorArray);
       
       setScanning(false);
       setSuccess(true);
-      
-      // Stop camera right after successful scan for better UX
       stopCamera();
       
-      // Pass the scanned template after a short success animation
       setTimeout(() => {
-        onScan(base64Image);
-      }, 1000);
-      
-    }, 1500); // 1.5s scanning animation
+        onScan(faceTemplate);
+      }, 500);
+
+    } catch (err) {
+      console.error("Face API Error:", err);
+      setError("Skanerlashda xatolik yuz berdi.");
+      setScanning(false);
+    }
   };
 
   if (!isOpen) return null;

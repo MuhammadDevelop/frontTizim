@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react';
 import { StudentAPI } from '../../api/client';
 import FaceScanner from '../../components/FaceScanner';
-import { FiCamera } from 'react-icons/fi';
+import { FiCamera, FiUserCheck } from 'react-icons/fi';
 
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('uz-UZ', {year:'numeric',month:'short',day:'numeric'}) : '—';
 const statusMap = { present: {label:'Keldi', cls:'badge-success'}, absent: {label:'Kelmadi', cls:'badge-danger'}, late: {label:'Kech keldi', cls:'badge-warning'}, excused: {label:'Sababli', cls:'badge-info'} };
 
 export default function AttendancePage() {
+  const [me, setMe] = useState(null);
   const [records, setRecords] = useState([]);
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
+  
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [enrollScannerOpen, setEnrollScannerOpen] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState('');
   const [groupSelectModal, setGroupSelectModal] = useState(false);
 
@@ -18,14 +21,23 @@ export default function AttendancePage() {
     StudentAPI.attendance().then(r => setRecords(Array.isArray(r.data) ? r.data : [])).catch(() => {});
   };
 
-  useEffect(() => {
+  const loadData = () => {
     Promise.all([
+      StudentAPI.me().then(r => setMe(r.data)),
       StudentAPI.attendance().then(r => setRecords(Array.isArray(r.data) ? r.data : [])),
       StudentAPI.myGroups().then(r => setGroups(Array.isArray(r.data) ? r.data : []))
     ]).catch(() => {}).finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
 
   const openFaceAttendance = () => {
+    if (!me?.face_registered) {
+      alert("Avval yuzingizni ro'yxatdan o'tkazing!");
+      return;
+    }
     if (groups.length === 1) {
       setSelectedGroupId(groups[0].id);
       setScannerOpen(true);
@@ -43,11 +55,11 @@ export default function AttendancePage() {
     setScannerOpen(true);
   };
 
-  const handleScan = async (base64Image) => {
+  const handleScanAttendance = async (faceTemplate) => {
     try {
       const res = await StudentAPI.faceAttendance({
         group_id: Number(selectedGroupId),
-        face_template: base64Image
+        face_template: faceTemplate
       });
       alert(res.data.message || "Davomat muvaffaqiyatli tasdiqlandi!");
       setScannerOpen(false);
@@ -58,14 +70,35 @@ export default function AttendancePage() {
     }
   };
 
+  const handleEnrollFace = async (faceTemplate) => {
+    try {
+      const res = await StudentAPI.faceEnroll({
+        face_template: faceTemplate
+      });
+      alert(res.data.message || "Face ID ro'yxatdan o'tkazildi!");
+      setEnrollScannerOpen(false);
+      loadData(); // Refresh me profile to update face_registered status
+    } catch (err) {
+      alert("Xato: " + (err.response?.data?.detail || err.message));
+      setEnrollScannerOpen(false);
+    }
+  };
+
   if (loading) return <div className="loading-overlay"><div className="spinner spinner-lg" /></div>;
   return (
     <>
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div><h2>✅ Mening Davomatim</h2></div>
-        <button className="btn btn-primary" onClick={openFaceAttendance} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <FiCamera /> Face ID orqali tasdiqlash
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          {!me?.face_registered && (
+            <button className="btn btn-warning" onClick={() => setEnrollScannerOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <FiUserCheck /> Yuzni ro'yxatdan o'tkazish
+            </button>
+          )}
+          <button className="btn btn-primary" onClick={openFaceAttendance} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <FiCamera /> Face ID orqali tasdiqlash
+          </button>
+        </div>
       </div>
       
       <div className="card">
@@ -88,7 +121,7 @@ export default function AttendancePage() {
             <form onSubmit={startScannerWithGroup}>
               <select className="form-control mb-16" value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)} required>
                 <option value="">-- Guruhni tanlang --</option>
-                {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                {groups.map(g => <option key={g.id} value={g.id}>{g.name || g.course_name || `Guruh #${g.id}`}</option>)}
               </select>
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setGroupSelectModal(false)}>Bekor qilish</button>
@@ -99,10 +132,20 @@ export default function AttendancePage() {
         </div>
       )}
 
+      {/* Attendance Scanner */}
       <FaceScanner 
         isOpen={scannerOpen} 
         onClose={() => setScannerOpen(false)} 
-        onScan={handleScan} 
+        onScan={handleScanAttendance} 
+        title="Yuz orqali davomat qilish"
+      />
+
+      {/* Enroll Scanner */}
+      <FaceScanner 
+        isOpen={enrollScannerOpen} 
+        onClose={() => setEnrollScannerOpen(false)} 
+        onScan={handleEnrollFace} 
+        title="Face ID ni ro'yxatdan o'tkazish"
       />
     </>
   );
